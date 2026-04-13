@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Helix Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          helix: { DEFAULT: '#7c3aed', light: '#a78bfa', dark: '#4c1d95' }
+        }
+      }
+    }
+  }
+</script>
+<style>
+  [x-cloak] { display: none !important; }
+  .msg-user { background: #1e1b4b; }
+  .msg-assistant { background: #0f172a; }
+  pre { white-space: pre-wrap; word-break: break-word; }
+  .scroll-auto { scroll-behavior: auto; }
+</style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen" x-data="helixApp()" x-init="init()" x-cloak>
+
+<!-- Login screen -->
+<div x-show="!authenticated" class="min-h-screen flex items-center justify-center">
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-8 w-full max-w-sm shadow-2xl">
+    <div class="text-center mb-6">
+      <div class="flex justify-center mb-2">
+        <svg width="40" height="56" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Back strand segments (faded, drawn first) -->
+          <path d="M 8,0 C 8,5 32,9 32,14" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
+          <path d="M 8,14 C 8,19 32,23 32,28" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
+          <path d="M 8,28 C 8,33 32,37 32,42" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
+          <path d="M 8,42 C 8,47 32,51 32,56" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
+          <!-- Base pair rungs -->
+          <line x1="8" y1="0" x2="32" y2="0" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
+          <line x1="8" y1="14" x2="32" y2="14" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
+          <line x1="8" y1="28" x2="32" y2="28" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
+          <line x1="8" y1="42" x2="32" y2="42" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
+          <line x1="8" y1="56" x2="32" y2="56" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
+          <!-- Front strand segments (solid, drawn on top) -->
+          <path d="M 32,0 C 32,5 8,9 8,14" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M 32,14 C 32,19 8,23 8,28" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M 32,28 C 32,33 8,37 8,42" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M 32,42 C 32,47 8,51 8,56" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-helix">Helix</h1>
+      <p class="text-gray-400 text-sm">AI Agent Harness</p>
+    </div>
+    <input
+      type="password"
+      x-model="loginPassword"
+      @keyup.enter="login()"
+      placeholder="Admin password"
+      class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:border-helix"
+    >
+    <button @click="login()" class="w-full bg-helix hover:bg-helix-dark text-white font-semibold py-2 rounded-lg transition">
+      Login
+    </button>
+    <p x-show="loginError" class="text-red-400 text-sm mt-2 text-center" x-text="loginError"></p>
+  </div>
+</div>
+
+<!-- Main app -->
+<div x-show="authenticated" class="flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <div class="w-48 bg-gray-900 border-r border-gray-800 flex flex-col flex-shrink-0">
+    <div class="p-4 border-b border-gray-800">
+      <div class="flex items-center gap-2">
+        <svg width="20" height="28" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 8,0 C 8,5 32,9 32,14" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
+          <path d="M 8,14 C 8,19 32,23 32,28" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
+          <path d="M 8,28 C 8,33 32,37 32,42" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
+          <path d="M 8,42 C 8,47 32,51 32,56" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
+          <line x1="8" y1="0" x2="32" y2="0" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
+          <line x1="8" y1="14" x2="32" y2="14" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
+          <line x1="8" y1="28" x2="32" y2="28" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
+          <line x1="8" y1="42" x2="32" y2="42" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
+          <line x1="8" y1="56" x2="32" y2="56" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
+          <path d="M 32,0 C 32,5 8,9 8,14" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M 32,14 C 32,19 8,23 8,28" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M 32,28 C 32,33 8,37 8,42" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M 32,42 C 32,47 8,51 8,56" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="font-bold text-helix-light">Helix</div>
+          <div class="text-xs text-gray-500" x-text="health.status || 'checking...'"></div>
+        </div>
+      </div>
+    </div>
+    <nav class="flex-1 p-2 space-y-1">
+      <template x-for="page in pages" :key="page.id">
+        <button
+          @click="currentPage = page.id; onPageChange(page.id)"
+          :class="currentPage === page.id ? 'bg-helix text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'"
+          class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition"
+          x-text="page.label"
+        ></button>
+      </template>
+    </nav>
+    <div class="p-3 border-t border-gray-800 text-xs text-gray-600">
+      <div>Sessions: <span class="text-gray-400" x-text="health.sessions || 0"></span></div>
+      <div>Uptime: <span class="text-gray-400" x-text="formatUptime(health.uptime || 0)"></span></div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Home / Status page -->
+    <div x-show="currentPage === 'home'" class="flex-1 overflow-y-auto p-6">
+      <h2 class="text-xl font-bold mb-6">System Status</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
+          <div class="text-xs text-gray-500 mb-1">Status</div>
+          <div class="text-lg font-bold" :class="health.status === 'ok' ? 'text-green-400' : 'text-red-400'" x-text="health.status || '...'"></div>
+        </div>
+        <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
+          <div class="text-xs text-gray-500 mb-1">Sessions</div>
+          <div class="text-lg font-bold text-helix-light" x-text="health.sessions || 0"></div>
+        </div>
+        <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
+          <div class="text-xs text-gray-500 mb-1">Uptime</div>
+          <div class="text-lg font-bold text-gray-200" x-text="formatUptime(health.uptime || 0)"></div>
+        </div>
+        <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
+          <div class="text-xs text-gray-500 mb-1">Channels</div>
+          <div class="text-sm font-bold text-gray-200" x-text="(health.channels || []).join(', ') || 'none'"></div>
+        </div>
+      </div>
+
+      <!-- Models roster -->
+      <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 mb-4">
+        <h3 class="font-semibold mb-3 text-gray-300">Model Roster</h3>
+        <div class="space-y-2">
+          <template x-for="m in (config.models?.roster || [])" :key="m.alias">
+            <div class="flex items-center gap-3 text-sm">
+              <span class="bg-helix/20 text-helix-light px-2 py-0.5 rounded text-xs font-mono" x-text="m.alias"></span>
+              <span class="text-gray-400" x-text="m.tier"></span>
+              <span class="text-gray-500" x-text="m.description"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat page -->
+    <div x-show="currentPage === 'chat'" class="flex-1 flex flex-col overflow-hidden">
+      <div class="border-b border-gray-800 px-4 py-3 flex items-center gap-4">
+        <span class="font-semibold text-gray-200">Chat</span>
+        <select x-model="chatModel" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-gray-300">
+          <template x-for="m in (config.models?.roster || [])" :key="m.alias">
+            <option :value="m.id" x-text="m.alias + ' — ' + m.description"></option>
+          </template>
+        </select>
+        <span x-show="wsStatus !== 'connected'" class="text-xs text-yellow-400" x-text="wsStatus"></span>
+      </div>
+      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
+        <template x-for="msg in chatMessages" :key="msg.id">
+          <div :class="msg.role === 'user' ? 'msg-user' : 'msg-assistant'" class="rounded-lg p-3 text-sm">
+            <div class="text-xs text-gray-500 mb-1" x-text="msg.role === 'user' ? '👤 You' : '⚡ Agent'"></div>
+            <pre class="text-gray-200" x-text="msg.content"></pre>
+          </div>
+        </template>
+        <div x-show="thinking" class="msg-assistant rounded-lg p-3 text-sm text-gray-500">⚡ Thinking...</div>
+      </div>
+      <div class="border-t border-gray-800 p-3 flex gap-2">
+        <textarea
+          x-model="chatInput"
+          @keydown.enter="if(!$event.shiftKey){ $event.preventDefault(); sendChat(); }"
+          placeholder="Type a message... (Shift+Enter for newline)"
+          rows="2"
+          class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-helix"
+        ></textarea>
+        <button @click="sendChat()" :disabled="thinking || !chatInput.trim()" class="bg-helix hover:bg-helix-dark disabled:opacity-50 px-4 rounded-lg font-semibold transition">
+          Send
+        </button>
+      </div>
+    </div>
+
+    <!-- Sessions page -->
+    <div x-show="currentPage === 'sessions'" class="flex-1 overflow-y-auto p-6">
+      <h2 class="text-xl font-bold mb-4">Sessions</h2>
+      <div x-show="sessions.length === 0" class="text-gray-500">No active sessions.</div>
+      <div class="space-y-3">
+        <template x-for="s in sessions" :key="s.session_id">
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <div class="font-mono text-xs text-helix-light" x-text="s.session_id.slice(0,8) + '...'"></div>
+              <button @click="resetSession(s.channel, s.peer)" class="text-xs text-red-400 hover:text-red-300">Reset</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs text-gray-400">
+              <div>Channel: <span class="text-gray-200" x-text="s.channel"></span></div>
+              <div>Peer: <span class="text-gray-200" x-text="s.peer"></span></div>
+              <div>Model: <span class="text-gray-200" x-text="s.model"></span></div>
+              <div>Tokens: <span class="text-gray-200" x-text="(s.token_count || 0).toLocaleString()"></span></div>
+            </div>
+            <button @click="loadTranscript(s.session_id)" class="mt-2 text-xs text-helix-light hover:underline">
+              View transcript →
+            </button>
+            <div x-show="transcript.session_id === s.session_id" class="mt-3 bg-gray-950 rounded-lg p-3 max-h-48 overflow-y-auto">
+              <template x-for="msg in transcript.messages" :key="msg.role + Math.random()">
+                <div class="text-xs mb-2">
+                  <span class="text-gray-500" x-text="msg.role + ': '"></span>
+                  <span class="text-gray-300" x-text="typeof msg.content === 'string' ? msg.content.slice(0,200) : JSON.stringify(msg.content).slice(0,200)"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Memory page -->
+    <div x-show="currentPage === 'memory'" class="flex-1 overflow-y-auto p-6">
+      <h2 class="text-xl font-bold mb-4">Memory</h2>
+      <div class="flex gap-2 mb-4">
+        <input x-model="memoryQuery" @keyup.enter="searchMemory()" placeholder="Search memory..." class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-helix">
+        <select x-model="memorySearchMode" class="bg-gray-800 border border-gray-700 rounded px-2 text-sm text-gray-300">
+          <option value="vsearch">semantic</option>
+          <option value="search">keyword</option>
+          <option value="query">hybrid</option>
+        </select>
+        <button @click="searchMemory()" class="bg-helix hover:bg-helix-dark px-4 py-2 rounded-lg text-sm font-semibold">Search</button>
+      </div>
+      <div x-show="memoryResults" class="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-4 text-sm">
+        <div class="text-xs text-gray-500 mb-2">Search results:</div>
+        <pre class="text-gray-300 text-xs" x-text="memoryResults"></pre>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <!-- Today's log -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <h3 class="font-semibold mb-2 text-gray-300">Today's Log</h3>
+          <pre x-show="todayMemory" class="text-xs text-gray-400 max-h-64 overflow-y-auto" x-text="todayMemory"></pre>
+          <p x-show="!todayMemory" class="text-gray-600 text-sm">No entries today.</p>
+        </div>
+
+        <!-- MEMORY.md editor -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <h3 class="font-semibold mb-2 text-gray-300">MEMORY.md (Long-term)</h3>
+          <textarea
+            x-model="longTermMemory"
+            rows="8"
+            class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs font-mono resize-none focus:outline-none focus:border-helix"
+          ></textarea>
+          <button @click="saveLongTermMemory()" class="mt-2 bg-helix hover:bg-helix-dark px-3 py-1 rounded text-sm font-semibold">Save</button>
+          <span x-show="memorySaved" class="ml-2 text-xs text-green-400">Saved!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Config page -->
+    <div x-show="currentPage === 'config'" class="flex-1 overflow-y-auto p-6">
+      <h2 class="text-xl font-bold mb-4">Configuration</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <!-- Discord -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <h3 class="font-semibold mb-3 text-gray-300">Discord</h3>
+          <label class="flex items-center gap-2 mb-3 text-sm">
+            <input type="checkbox" x-model="config.discord.enabled" @change="saveDiscordConfig()" class="rounded">
+            <span>Enabled</span>
+          </label>
+          <label class="block text-xs text-gray-500 mb-1">Allowed User IDs (one per line)</label>
+          <textarea
+            :value="(config.discord?.allowed_users || []).join('\n')"
+            @change="config.discord.allowed_users = $event.target.value.split('\n').filter(Boolean); saveDiscordConfig()"
+            rows="4"
+            class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs font-mono resize-none focus:outline-none focus:border-helix"
+          ></textarea>
+          <label class="flex items-center gap-2 mt-2 text-sm">
+            <input type="checkbox" x-model="config.discord.mention_only" @change="saveDiscordConfig()" class="rounded">
+            <span>Mention-only in guild channels</span>
+          </label>
+        </div>
+
+        <!-- Telegram -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <h3 class="font-semibold mb-3 text-gray-300">Telegram</h3>
+          <label class="flex items-center gap-2 mb-3 text-sm">
+            <input type="checkbox" x-model="config.telegram.enabled" @change="saveTelegramConfig()" class="rounded">
+            <span>Enabled</span>
+          </label>
+          <label class="block text-xs text-gray-500 mb-1">Allowed User IDs (one per line)</label>
+          <textarea
+            :value="(config.telegram?.allowed_users || []).join('\n')"
+            @change="config.telegram.allowed_users = $event.target.value.split('\n').filter(Boolean).map(Number); saveTelegramConfig()"
+            rows="4"
+            class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs font-mono resize-none focus:outline-none focus:border-helix"
+          ></textarea>
+        </div>
+
+        <!-- Add model -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <h3 class="font-semibold mb-3 text-gray-300">Add Model</h3>
+          <input x-model="newModel.id" placeholder="Model ID (e.g. claude-opus-4-6)" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs mb-2 focus:outline-none focus:border-helix">
+          <input x-model="newModel.alias" placeholder="Alias (e.g. opus)" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs mb-2 focus:outline-none focus:border-helix">
+          <input x-model="newModel.description" placeholder="Description" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs mb-2 focus:outline-none focus:border-helix">
+          <select x-model="newModel.tier" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs mb-2 focus:outline-none focus:border-helix">
+            <option value="fast">fast</option>
+            <option value="balanced">balanced</option>
+            <option value="powerful">powerful</option>
+          </select>
+          <button @click="addModel()" class="bg-helix hover:bg-helix-dark px-3 py-1 rounded text-sm font-semibold">Add Model</button>
+          <span x-show="modelAdded" class="ml-2 text-xs text-green-400">Added!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Crons page -->
+    <div x-show="currentPage === 'crons'" class="flex-1 overflow-y-auto p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold">Cron Jobs</h2>
+        <button
+          @click="cronFormOpen = !cronFormOpen"
+          class="bg-helix hover:bg-helix-dark px-4 py-2 rounded-lg text-sm font-semibold transition"
+          x-text="cronFormOpen ? '✕ Cancel' : '+ Add Cron'"
+        ></button>
+      </div>
+
+      <!-- Add cron form -->
+      <div x-show="cronFormOpen" x-transition class="bg-gray-900 border border-helix/40 rounded-xl p-5 mb-6">
+        <h3 class="font-semibold mb-4 text-gray-300">New Cron Job</h3>
+        <div class="grid md:grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Name</label>
+            <input
+              x-model="newCron.name"
+              placeholder="e.g. Morning Briefing"
+              class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-helix"
+            >
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Schedule (cron expression, uses configured timezone)</label>
+            <input
+              x-model="newCron.schedule"
+              placeholder="e.g. 0 8 * * * (daily at 8 AM)"
+              class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-helix"
+            >
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="block text-xs text-gray-500 mb-1">Prompt (what to tell the agent when this fires)</label>
+          <textarea
+            x-model="newCron.prompt"
+            rows="3"
+            placeholder="e.g. Run a quick security audit and summarize any alerts."
+            class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm resize-none focus:outline-none focus:border-helix"
+          ></textarea>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="flex-1">
+            <label class="block text-xs text-gray-500 mb-1">Model override (optional, defaults to heartbeat model)</label>
+            <select x-model="newCron.model" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-helix">
+              <option value="">Default (heartbeat model)</option>
+              <template x-for="m in (config.models?.roster || [])" :key="m.alias">
+                <option :value="m.alias" x-text="m.alias + ' — ' + m.description"></option>
+              </template>
+            </select>
+          </div>
+          <div class="flex items-center gap-2 pt-4">
+            <input type="checkbox" x-model="newCron.enabled" id="newCronEnabled" class="rounded">
+            <label for="newCronEnabled" class="text-sm text-gray-300">Enabled</label>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 mt-4">
+          <button
+            @click="addCron()"
+            :disabled="!newCron.name || !newCron.schedule || !newCron.prompt"
+            class="bg-helix hover:bg-helix-dark disabled:opacity-50 px-5 py-2 rounded-lg text-sm font-semibold transition"
+          >
+            Add Cron Job
+          </button>
+          <span x-show="cronAddError" class="text-xs text-red-400" x-text="cronAddError"></span>
+          <span x-show="cronAdded" class="text-xs text-green-400">Added!</span>
+        </div>
+      </div>
+
+      <!-- Cron list -->
+      <div x-show="crons.length === 0 && !cronFormOpen" class="text-gray-500 text-sm">
+        No cron jobs configured. Click <strong>+ Add Cron</strong> to create one.
+      </div>
+      <div class="space-y-3">
+        <template x-for="cron in crons" :key="cron.id">
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-semibold text-gray-200" x-text="cron.name"></span>
+                  <span
+                    class="text-xs px-2 py-0.5 rounded-full font-medium"
+                    :class="cron.enabled ? 'bg-green-900/40 text-green-400' : 'bg-gray-700 text-gray-500'"
+                    x-text="cron.enabled ? 'active' : 'paused'"
+                  ></span>
+                </div>
+                <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400 mb-2">
+                  <span>
+                    <span class="text-gray-600">schedule: </span>
+                    <span class="font-mono text-helix-light" x-text="cron.schedule"></span>
+                  </span>
+                  <span x-show="cron.model">
+                    <span class="text-gray-600">model: </span>
+                    <span class="text-gray-300" x-text="cron.model"></span>
+                  </span>
+                  <span x-show="cron.next_run">
+                    <span class="text-gray-600">next: </span>
+                    <span class="text-gray-300" x-text="cron.next_run ? new Date(cron.next_run).toLocaleString() : '—'"></span>
+                  </span>
+                  <span x-show="cron.last_run">
+                    <span class="text-gray-600">last: </span>
+                    <span class="text-gray-300" x-text="cron.last_run ? new Date(cron.last_run).toLocaleString() : '—'"></span>
+                  </span>
+                </div>
+                <div class="text-xs text-gray-500 bg-gray-950 rounded px-3 py-2 font-mono truncate" x-text="cron.prompt"></div>
+              </div>
+              <div class="flex flex-col gap-2 flex-shrink-0">
+                <button
+                  @click="toggleCron(cron)"
+                  class="text-xs px-3 py-1 rounded border transition"
+                  :class="cron.enabled
+                    ? 'border-yellow-700 text-yellow-500 hover:bg-yellow-900/20'
+                    : 'border-green-700 text-green-500 hover:bg-green-900/20'"
+                  x-text="cron.enabled ? 'Pause' : 'Resume'"
+                ></button>
+                <button
+                  @click="runCronNow(cron)"
+                  class="text-xs px-3 py-1 rounded border border-helix/50 text-helix-light hover:bg-helix/10 transition"
+                >Run Now</button>
+                <button
+                  @click="deleteCron(cron)"
+                  class="text-xs px-3 py-1 rounded border border-red-900 text-red-500 hover:bg-red-900/20 transition"
+                >Delete</button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Logs page -->
+    <div x-show="currentPage === 'logs'" class="flex-1 flex flex-col overflow-hidden p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold">Logs</h2>
+        <div class="flex gap-2">
+          <button @click="logTab = 'audit'; loadAuditLogs()" :class="logTab === 'audit' ? 'bg-helix text-white' : 'bg-gray-800 text-gray-400'" class="px-3 py-1 rounded text-sm">Audit</button>
+          <button @click="logTab = 'op'; loadOpLogs()" :class="logTab === 'op' ? 'bg-helix text-white' : 'bg-gray-800 text-gray-400'" class="px-3 py-1 rounded text-sm">Operational</button>
+          <button @click="refreshLogs()" class="bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded text-sm text-gray-400">Refresh</button>
+        </div>
+      </div>
+      <div class="flex-1 overflow-y-auto bg-gray-900 border border-gray-800 rounded-xl p-4 font-mono text-xs">
+        <template x-if="logTab === 'audit'">
+          <div>
+            <template x-for="(line, i) in auditLogs" :key="i">
+              <div class="mb-1 text-gray-400">
+                <span class="text-gray-600" x-text="new Date((line.ts || 0) * 1000).toLocaleTimeString() + ' '"></span>
+                <span :class="{
+                  'text-red-400': line.event === 'auth_rejection' || line.event === 'injection_detected',
+                  'text-yellow-400': line.event === 'error',
+                  'text-green-400': line.event === 'message_sent',
+                  'text-blue-400': line.event === 'message_received',
+                  'text-purple-400': line.event === 'tool_invoked',
+                }" x-text="line.event || 'unknown'"></span>
+                <span x-text="' — ' + (line.channel || '') + ' ' + (line.sender_id || '') + ' ' + (line.content_preview || line.reason || line.tool_name || '')"></span>
+              </div>
+            </template>
+          </div>
+        </template>
+        <template x-if="logTab === 'op'">
+          <div>
+            <template x-for="(line, i) in opLogs" :key="i">
+              <div class="mb-0.5 text-gray-400" x-text="line"></div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function helixApp() {
+  return {
+    authenticated: false,
+    loginPassword: '',
+    loginError: '',
+    token: localStorage.getItem('helix_token') || '',
+    currentPage: 'home',
+    pages: [
+      { id: 'home',     label: '🏠 Home' },
+      { id: 'chat',     label: '💬 Chat' },
+      { id: 'sessions', label: '📋 Sessions' },
+      { id: 'memory',   label: '🧠 Memory' },
+      { id: 'config',   label: '⚙️ Config' },
+      { id: 'crons',    label: '⏰ Crons' },
+      { id: 'logs',     label: '📜 Logs' },
+    ],
+    health: {},
+    config: { discord: {}, telegram: {}, models: { roster: [] } },
+    sessions: [],
+    transcript: {},
+    chatMessages: [],
+    chatInput: '',
+    chatModel: '',
+    thinking: false,
+    wsStatus: 'disconnected',
+    ws: null,
+    memoryQuery: '',
+    memorySearchMode: 'vsearch',
+    memoryResults: '',
+    todayMemory: '',
+    longTermMemory: '',
+    memorySaved: false,
+    logTab: 'audit',
+    auditLogs: [],
+    opLogs: [],
+    newModel: { id: '', alias: '', description: '', tier: 'balanced' },
+    modelAdded: false,
+    msgCounter: 0,
+    // Crons state
+    crons: [],
+    cronFormOpen: false,
+    newCron: { name: '', schedule: '', prompt: '', model: '', enabled: true },
+    cronAdded: false,
+    cronAddError: '',
+
+    async init() {
+      if (this.token) {
+        const ok = await this.checkAuth();
+        if (ok) {
+          this.authenticated = true;
+          this.loadAll();
+          return;
+        }
+      }
+    },
+
+    onPageChange(pageId) {
+      if (pageId === 'crons') this.loadCrons();
+    },
+
+    async checkAuth() {
+      try {
+        const r = await this.api('/api/sessions');
+        return r.ok || r.status !== 401;
+      } catch { return false; }
+    },
+
+    async login() {
+      this.loginError = '';
+      try {
+        const r = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: this.loginPassword }),
+        });
+        if (r.ok) {
+          const data = await r.json();
+          this.token = data.token;
+          localStorage.setItem('helix_token', this.token);
+          this.authenticated = true;
+          this.loadAll();
+        } else {
+          this.loginError = 'Invalid password';
+        }
+      } catch (e) {
+        this.loginError = 'Connection error';
+      }
+    },
+
+    async api(path, opts = {}) {
+      return fetch(path, {
+        ...opts,
+        headers: {
+          'Authorization': 'Bearer ' + this.token,
+          'Content-Type': 'application/json',
+          ...(opts.headers || {}),
+        },
+      });
+    },
+
+    async loadAll() {
+      await Promise.all([
+        this.loadHealth(),
+        this.loadConfig(),
+        this.loadSessions(),
+        this.loadMemory(),
+        this.loadAuditLogs(),
+        this.loadCrons(),
+        this.connectWS(),
+      ]);
+      // Auto-refresh every 30s
+      setInterval(() => { this.loadHealth(); this.loadSessions(); }, 30000);
+    },
+
+    async loadHealth() {
+      try {
+        const r = await fetch('/health');
+        this.health = await r.json();
+      } catch {}
+    },
+
+    async loadConfig() {
+      try {
+        const r = await this.api('/api/config');
+        if (r.ok) {
+          this.config = await r.json();
+          if (this.config.models?.roster?.length) {
+            this.chatModel = this.config.models.roster.find(m => m.alias === this.config.models.default)?.id
+              || this.config.models.roster[0].id;
+          }
+        }
+      } catch {}
+    },
+
+    async loadSessions() {
+      try {
+        const r = await this.api('/api/sessions');
+        if (r.ok) this.sessions = await r.json();
+      } catch {}
+    },
+
+    async loadTranscript(sid) {
+      if (this.transcript.session_id === sid) { this.transcript = {}; return; }
+      const r = await this.api(`/api/sessions/${sid}/transcript`);
+      if (r.ok) this.transcript = await r.json();
+    },
+
+    async resetSession(channel, peer) {
+      if (!confirm(`Reset session for ${channel}:${peer}?`)) return;
+      await this.api(`/api/sessions/${channel}/${peer}`, { method: 'DELETE' });
+      await this.loadSessions();
+    },
+
+    async loadMemory() {
+      try {
+        const [today, lt] = await Promise.all([
+          this.api('/api/memory/today').then(r => r.json()),
+          this.api('/api/memory/long-term').then(r => r.json()),
+        ]);
+        this.todayMemory = today.content || '';
+        this.longTermMemory = lt.content || '';
+      } catch {}
+    },
+
+    async searchMemory() {
+      if (!this.memoryQuery) return;
+      const r = await this.api(`/api/memory/search?q=${encodeURIComponent(this.memoryQuery)}&mode=${this.memorySearchMode}`);
+      if (r.ok) {
+        const data = await r.json();
+        this.memoryResults = data.results || 'No results.';
+      }
+    },
+
+    async saveLongTermMemory() {
+      const r = await this.api('/api/memory/long-term', {
+        method: 'PUT',
+        body: JSON.stringify({ content: this.longTermMemory }),
+      });
+      if (r.ok) {
+        this.memorySaved = true;
+        setTimeout(() => this.memorySaved = false, 2000);
+      }
+    },
+
+    async saveDiscordConfig() {
+      await this.api('/api/config/discord', {
+        method: 'PUT',
+        body: JSON.stringify({
+          enabled: this.config.discord.enabled,
+          allowed_users: this.config.discord.allowed_users,
+          mention_only: this.config.discord.mention_only,
+        }),
+      });
+    },
+
+    async saveTelegramConfig() {
+      await this.api('/api/config/telegram', {
+        method: 'PUT',
+        body: JSON.stringify({
+          enabled: this.config.telegram.enabled,
+          allowed_users: this.config.telegram.allowed_users,
+        }),
+      });
+    },
+
+    async addModel() {
+      if (!this.newModel.id || !this.newModel.alias) return;
+      const r = await this.api('/api/config/models/add', {
+        method: 'POST',
+        body: JSON.stringify(this.newModel),
+      });
+      if (r.ok) {
+        this.modelAdded = true;
+        setTimeout(() => this.modelAdded = false, 2000);
+        this.newModel = { id: '', alias: '', description: '', tier: 'balanced' };
+        await this.loadConfig();
+      }
+    },
+
+    // ── Cron methods ──────────────────────────────────────────────────────────
+
+    async loadCrons() {
+      try {
+        const r = await this.api('/api/crons');
+        if (r.ok) this.crons = await r.json();
+      } catch {}
+    },
+
+    async addCron() {
+      this.cronAddError = '';
+      if (!this.newCron.name || !this.newCron.schedule || !this.newCron.prompt) return;
+      const r = await this.api('/api/crons', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: this.newCron.name,
+          schedule: this.newCron.schedule,
+          prompt: this.newCron.prompt,
+          model: this.newCron.model || null,
+          enabled: this.newCron.enabled,
+        }),
+      });
+      if (r.ok) {
+        this.cronAdded = true;
+        setTimeout(() => this.cronAdded = false, 2000);
+        this.newCron = { name: '', schedule: '', prompt: '', model: '', enabled: true };
+        this.cronFormOpen = false;
+        await this.loadCrons();
+      } else {
+        const data = await r.json().catch(() => ({}));
+        this.cronAddError = data.detail || 'Failed to add cron';
+      }
+    },
+
+    async toggleCron(cron) {
+      const r = await this.api(`/api/crons/${cron.id}/toggle`, { method: 'PATCH' });
+      if (r.ok) await this.loadCrons();
+    },
+
+    async deleteCron(cron) {
+      if (!confirm(`Delete cron "${cron.name}"?`)) return;
+      const r = await this.api(`/api/crons/${cron.id}`, { method: 'DELETE' });
+      if (r.ok) await this.loadCrons();
+    },
+
+    async runCronNow(cron) {
+      const r = await this.api(`/api/crons/${cron.id}/run`, { method: 'POST' });
+      if (r.ok) {
+        // Briefly show feedback by refreshing after a moment
+        setTimeout(() => this.loadCrons(), 3000);
+      }
+    },
+
+    // ── Log methods ───────────────────────────────────────────────────────────
+
+    async loadAuditLogs() {
+      const r = await this.api('/api/logs/audit?lines=200');
+      if (r.ok) {
+        const data = await r.json();
+        this.auditLogs = (data.lines || []).reverse();
+      }
+    },
+
+    async loadOpLogs() {
+      const r = await this.api('/api/logs/operational?lines=200');
+      if (r.ok) {
+        const data = await r.json();
+        this.opLogs = (data.lines || []).reverse();
+      }
+    },
+
+    refreshLogs() {
+      if (this.logTab === 'audit') this.loadAuditLogs();
+      else this.loadOpLogs();
+    },
+
+    connectWS() {
+      this.wsStatus = 'connecting...';
+      try {
+        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        this.ws = new WebSocket(`${protocol}//${location.host}/ws/chat`);
+        this.ws.onopen = () => {
+          this.ws.send(JSON.stringify({ token: this.token }));
+        };
+        this.ws.onmessage = (e) => {
+          const data = JSON.parse(e.data);
+          if (data.status === 'connected') {
+            this.wsStatus = 'connected';
+          } else if (data.chunk) {
+            // Streaming chunk: append to last assistant message
+            const last = this.chatMessages[this.chatMessages.length - 1];
+            if (last && last.role === 'assistant') {
+              last.content += data.chunk;
+            }
+          } else if (data.done) {
+            this.thinking = false;
+          } else if (data.error) {
+            this.wsStatus = 'auth error';
+          }
+        };
+        this.ws.onclose = () => {
+          this.wsStatus = 'disconnected';
+          setTimeout(() => this.connectWS(), 5000);
+        };
+        this.ws.onerror = () => { this.wsStatus = 'error'; };
+      } catch (e) {
+        this.wsStatus = 'error: ' + e.message;
+      }
+    },
+
+    async sendChat() {
+      if (!this.chatInput.trim() || this.thinking) return;
+      const content = this.chatInput.trim();
+      this.chatInput = '';
+      this.thinking = true;
+
+      this.chatMessages.push({ id: ++this.msgCounter, role: 'user', content });
+      this.chatMessages.push({ id: ++this.msgCounter, role: 'assistant', content: '' });
+
+      // Scroll to bottom
+      this.$nextTick(() => {
+        const el = document.getElementById('chat-messages');
+        if (el) el.scrollTop = el.scrollHeight;
+      });
+
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ message: content, model: this.chatModel }));
+      } else {
+        this.chatMessages[this.chatMessages.length - 1].content = '[WebSocket not connected]';
+        this.thinking = false;
+      }
+    },
+
+    formatUptime(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      if (h > 0) return `${h}h ${m}m`;
+      if (m > 0) return `${m}m ${s}s`;
+      return `${s}s`;
+    },
+  };
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# Core AI
+PyJWT>=2.8.0
+
+# Scheduler
+apscheduler>=3.10.0
+
+# Channels
+discord.py>=2.7.1
+python-telegram-bot>=21.0
+
+# Database / Storage
+aiosqlite>=0.20.0
+
+# Web Admin UI
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+
+# Security
+argon2-cffi>=23.1.0
+cryptography>=46.0.0
+
+# Already installed (pinned for reproducibility)
+aiohttp>=3.13.4
+pydantic>=2.12.5
+websockets>=16.0
