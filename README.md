@@ -24,8 +24,8 @@ Helix acts as a frontend for [Claude Code](https://docs.anthropic.com/claude-cod
 ## Quick Start
 
 ```bash
-git clone https://github.com/your-username/helix.git
-cd helix
+git clone https://github.com/kingbee-helix/helix-agent.git
+cd helix-agent
 python3 main.py setup
 ```
 
