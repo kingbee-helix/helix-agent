@@ -275,10 +275,8 @@ if __name__ == "__main__":
         cmd = sys.argv[1]
         if cmd == "setup":
             from setup import run_setup
-            should_launch = run_setup()
-            if not should_launch:
-                sys.exit(0)
-            # Fall through to start Helix
+            run_setup()
+            sys.exit(0)
         elif cmd == "secrets":
             _cli_secrets()
             sys.exit(0)

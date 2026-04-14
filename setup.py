@@ -206,7 +206,18 @@ def run_setup():
     user_name = _ask("  Your name")
     nickname = _ask("  What should the agent call you?", default=user_name)
     detected_tz = _detect_timezone()
-    user_tz = _ask("  Your timezone", default=detected_tz)
+    print("  Your timezone:")
+    print(f"  1) System default ({detected_tz})")
+    print("  2) UTC")
+    print("  Or type a custom timezone (e.g. America/New_York, Europe/London)")
+    tz_choice = input("  Choose (press Enter for 1): ").strip()
+    if tz_choice == "2":
+        user_tz = "UTC"
+    elif tz_choice in ("", "1"):
+        user_tz = detected_tz
+    else:
+        user_tz = tz_choice
+    print(f"  Timezone set to: {user_tz}")
     print()
 
     # ── Step 3: Web admin password ─────────────────────────────────────
@@ -329,14 +340,26 @@ def run_setup():
     print()
 
     if _ask_yn("  Launch Helix now?"):
-        print()
-        print("  Starting Helix...")
-        print()
-        # Return to main to start the service
-        return True
+        start_script = HELIX_ROOT / "start.sh"
+        result = subprocess.run(["bash", str(start_script)], capture_output=True, text=True)
+        if result.returncode == 0:
+            print()
+            print("  Helix launched successfully!")
+            print("  You may close this terminal.")
+            print()
+            print("  Admin UI: http://127.0.0.1:18791")
+            print()
+            print("  Finish customizing your agent and configurations from the web UI.")
+            print()
+        else:
+            print("  Warning: could not start Helix automatically.")
+            print("  Run manually: ./start.sh")
+            print(f"  Error: {result.stderr.strip()}")
+            print()
+        return False
 
     print()
     print("  To start later: ./start.sh")
-    print("  Or: python main.py")
+    print("  Or: python3 main.py")
     print()
     return False
