@@ -213,9 +213,21 @@ class SessionManager:
         Saves the last CONTEXT_EXCHANGES exchanges as pending_context so the
         first turn on the new session can pick up where the old one left off.
         Clears claude_session_id so the next turn starts a fresh Claude Code session.
+
+        If pending_context is already set (e.g. from a prior /compact), it is
+        preserved as-is rather than overwritten with a transcript-derived block.
         """
-        context_block = self._build_context_block(session_id)
         async with self._lock:
+            # Check for existing pending_context (e.g. set by /compact)
+            async with self._db.execute(
+                "SELECT pending_context FROM sessions WHERE session_id=?",
+                (session_id,),
+            ) as cur:
+                row = await cur.fetchone()
+
+            existing = row["pending_context"] if row else None
+            context_block = existing if existing else self._build_context_block(session_id)
+
             await self._db.execute(
                 "UPDATE sessions SET model=?, claude_session_id=NULL, pending_context=? WHERE session_id=?",
                 (model_id, context_block, session_id),
