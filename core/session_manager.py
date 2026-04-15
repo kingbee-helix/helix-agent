@@ -240,6 +240,22 @@ class SessionManager:
             await self._db.commit()
             return context
 
+    async def compact_session(self, session_id: str, summary: str) -> None:
+        """Store compaction summary as pending_context, clear claude_session_id, mark compacted."""
+        context_block = (
+            "[Compacted session summary — loaded on session resume]\n\n"
+            f"{summary}\n\n"
+            "[End of compacted context. Continue the conversation from here.]"
+        )
+        async with self._lock:
+            await self._db.execute(
+                """UPDATE sessions
+                   SET pending_context=?, claude_session_id=NULL, compacted=compacted+1
+                   WHERE session_id=?""",
+                (context_block, session_id),
+            )
+            await self._db.commit()
+
     async def set_claude_session_id(self, session_id: str, claude_session_id: str) -> None:
         """Persist the Claude Code session ID for --resume on future turns."""
         async with self._lock:
@@ -300,4 +316,13 @@ class SessionManager:
                 entry = json.loads(line)
                 messages.append({"role": entry["role"], "content": entry["content"]})
         return messages
+
+    def overwrite_transcript(self, session_id: str, messages: list[dict]) -> None:
+        """Replace the transcript with a new set of messages (used after compaction)."""
+        path = _transcript_path(self.agent_id, session_id)
+        now = _now_ts()
+        with open(path, "w", encoding="utf-8") as f:
+            for msg in messages:
+                entry = {"ts": now, "role": msg["role"], "content": msg["content"]}
+                f.write(json.dumps(entry) + "\n")
 

@@ -143,6 +143,7 @@ Available in Discord, Telegram, and the web chat:
 |---------|-------------|
 | `/help` | List all commands |
 | `/new` or `/reset` or `/clear` | Start a fresh session |
+| `/compact` | Summarize and compress current session history |
 | `/model [alias]` | Switch model (haiku / sonnet / opus) |
 | `/status` | Session info + current model |
 | `/session` | List all active sessions |
@@ -157,7 +158,7 @@ Available in Discord, Telegram, and the web chat:
 
 When you switch models, Helix automatically carries forward the last 30 exchanges so the new model has context on what you were working on.
 
-> **Tip:** For long or complex conversations, run `/compact` in Claude Code first before switching models. This compresses the session history into a concise summary, which makes the context handoff much cleaner and cheaper on tokens.
+> **Tip:** For long or complex conversations, run `/compact` before switching models. Helix will summarize the full session into a concise context block — making the handoff cleaner and cheaper on tokens. You can run `/compact` directly from Discord, Telegram, or the web chat — no terminal needed.
 
 ## Adding Permissions
 

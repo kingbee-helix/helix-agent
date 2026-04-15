@@ -16,7 +16,7 @@ from core.config import get_config
 
 HARNESS_COMMANDS = {
     "/new", "/reset", "/stop", "/model", "/status", "/help",
-    "/clear", "/session", "/tasks",
+    "/clear", "/session", "/tasks", "/compact",
     "/memory", "/heartbeat", "/agent",
 }
 
@@ -50,6 +50,7 @@ async def handle_slash(
             "**Helix Commands**\n"
             "`/new` or `/reset` — Start a new session\n"
             "`/model [alias]` — Switch model (haiku/sonnet/opus)\n"
+            "`/compact` — Summarize and compress current session history\n"
             "`/status` — Show session + model info\n"
             "`/memory` — Open today's memory log\n"
             "`/clear` — Clear session history\n"
@@ -85,6 +86,67 @@ async def handle_slash(
                 await send_fn(f"Model switched to `{args.strip()}` ({model_id})")
             except ValueError:
                 await send_fn(f"Unknown model: `{args}`. Try: haiku, sonnet, opus")
+        return True
+
+    # ── /compact ───────────────────────────────────────────────────────────
+    if cmd == "/compact":
+        session = await session_manager.get_or_create(channel, peer)
+        sid = session["session_id"]
+        messages = session_manager.read_transcript(sid)
+
+        if len(messages) < 4:
+            await send_fn("Nothing to compact — session is too short.")
+            return True
+
+        await send_fn(f"Compacting {len(messages)} messages... hang tight.")
+
+        # Format transcript for summarization
+        transcript_text = "\n".join(
+            f"{'User' if m['role'] == 'user' else 'Assistant'}: {m['content']}"
+            for m in messages
+        )
+
+        summary_prompt = (
+            "Summarize the following conversation into a concise but thorough context block. "
+            "Preserve all important details: decisions made, code written or discussed, "
+            "tasks completed, current state of any work in progress, and what was being "
+            "worked on. Write it as a briefing for someone picking up this work from where "
+            "it left off. Be specific — include file names, variable names, commands, "
+            "or anything actionable that was discussed.\n\n"
+            f"CONVERSATION:\n{transcript_text}"
+        )
+
+        from core.cli_backend import call_claude
+
+        # Use the lightest available model for summarization
+        try:
+            compact_model = cfg.models.resolve("haiku")
+        except ValueError:
+            compact_model = cfg.models.default_id
+
+        try:
+            summary, _ = await call_claude(
+                model=compact_model,
+                system="You are an expert at summarizing technical conversations clearly and concisely.",
+                user_message=summary_prompt,
+                is_new_session=True,
+            )
+        except Exception as e:
+            await send_fn(f"Compact failed: {e}")
+            return True
+
+        # Persist summary, clear session, mark compacted
+        await session_manager.compact_session(sid, summary)
+
+        # Overwrite local transcript with just the summary
+        session_manager.overwrite_transcript(sid, [
+            {"role": "assistant", "content": f"[Compacted session summary]\n{summary}"}
+        ])
+
+        await send_fn(
+            f"✅ Compacted — {len(messages)} messages summarized.\n"
+            "Your next message will continue with the full context preserved."
+        )
         return True
 
     # ── /status ────────────────────────────────────────────────────────────

@@ -4,6 +4,11 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-04-14
+
+### Added
+- **`/compact` slash command** — compresses the current session history into a concise summary using the lightest available model (haiku). The summary is stored as pending context and injected on the next turn so the agent picks up exactly where it left off. Works in Discord, Telegram, and the web chat — no terminal required. Overwrites the local transcript with the summary and increments the compaction counter.
+
 ## [1.0.2] - 2026-04-14
 
 ### Added
