@@ -179,9 +179,10 @@ class SessionManager:
             await self._db.commit()
 
     async def set_model(self, session_id: str, model_id: str) -> None:
+        """Update session model and clear claude_session_id so next turn starts fresh with the new model."""
         async with self._lock:
             await self._db.execute(
-                "UPDATE sessions SET model=? WHERE session_id=?",
+                "UPDATE sessions SET model=?, claude_session_id=NULL WHERE session_id=?",
                 (model_id, session_id),
             )
             await self._db.commit()

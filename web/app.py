@@ -23,6 +23,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from core.config import get_config, save_config
 from security.secrets import get_secret, set_secret
+from channels.slash_commands import handle_slash
 
 logger = logging.getLogger("helix.web")
 
@@ -145,6 +146,22 @@ async def reset_session(channel: str, peer: str):
         raise HTTPException(404, "Session manager not running")
     await _session_manager.reset_session(channel, peer)
     return {"status": "reset"}
+
+
+@app.post("/api/sessions/{channel}/{peer}/model", dependencies=[Depends(require_auth)])
+async def set_session_model(channel: str, peer: str, body: dict):
+    """Switch the model for a session. Clears claude_session_id so next turn starts fresh."""
+    if not _session_manager:
+        raise HTTPException(404, "Session manager not running")
+    model_alias = body.get("model", "")
+    cfg = get_config()
+    try:
+        model_id = cfg.models.resolve(model_alias)
+    except ValueError:
+        raise HTTPException(400, f"Unknown model: {model_alias}")
+    session = await _session_manager.get_or_create(channel, peer)
+    await _session_manager.set_model(session["session_id"], model_id)
+    return {"status": "switched", "model": model_id}
 
 
 @app.get("/api/sessions/{session_id}/transcript", dependencies=[Depends(require_auth)])
@@ -452,12 +469,23 @@ async def ws_chat(websocket: WebSocket):
         while True:
             data = await websocket.receive_json()
             message = data.get("message", "")
-            model = data.get("model")
             if not message:
                 continue
 
+            # Handle slash commands before passing to agent loop
+            if message.startswith("/"):
+                responses = []
+                async def send_fn(text):
+                    responses.append(text)
+                    await websocket.send_json({"chunk": text})
+                handled = await handle_slash(message, "web", "admin", _session_manager, _agent_loop, send_fn)
+                if handled:
+                    full = "".join(responses)
+                    await websocket.send_json({"done": True, "full_response": full})
+                    continue
+
             response_parts = []
-            async for chunk in _agent_loop.run("web", "admin", message, model_override=model):
+            async for chunk in _agent_loop.run("web", "admin", message):
                 response_parts.append(chunk)
                 await websocket.send_json({"chunk": chunk})
 

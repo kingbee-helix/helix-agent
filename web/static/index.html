@@ -157,12 +157,11 @@
     <div x-show="currentPage === 'chat'" class="flex-1 flex flex-col overflow-hidden">
       <div class="border-b border-gray-800 px-4 py-3 flex items-center gap-4">
         <span class="font-semibold text-gray-200">Chat</span>
-        <select x-model="chatModel" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-gray-300">
+        <select x-model="chatModel" @change="switchModel($event.target.value)" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-gray-300">
           <template x-for="m in (config.models?.roster || [])" :key="m.alias">
-            <option :value="m.id" x-text="m.alias + ' — ' + m.description"></option>
+            <option :value="m.alias" x-text="m.alias + ' — ' + m.description"></option>
           </template>
         </select>
-        <span x-show="wsStatus !== 'connected'" class="text-xs text-yellow-400" x-text="wsStatus"></span>
       </div>
       <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
         <template x-for="msg in chatMessages" :key="msg.id">
@@ -615,8 +614,7 @@ function helixApp() {
         if (r.ok) {
           this.config = await r.json();
           if (this.config.models?.roster?.length) {
-            this.chatModel = this.config.models.roster.find(m => m.alias === this.config.models.default)?.id
-              || this.config.models.roster[0].id;
+            this.chatModel = this.config.models.default || this.config.models.roster[0].alias;
           }
         }
       } catch {}
@@ -833,10 +831,23 @@ function helixApp() {
       });
 
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ message: content, model: this.chatModel }));
+        this.ws.send(JSON.stringify({ message: content }));
       } else {
         this.chatMessages[this.chatMessages.length - 1].content = '[WebSocket not connected]';
         this.thinking = false;
+      }
+    },
+
+    async switchModel(alias) {
+      try {
+        const r = await fetch(`/api/sessions/web/admin/model`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` },
+          body: JSON.stringify({ model: alias })
+        });
+        if (!r.ok) console.error('Model switch failed:', await r.text());
+      } catch (e) {
+        console.error('Model switch error:', e);
       }
     },
 
