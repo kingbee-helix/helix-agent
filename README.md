@@ -6,6 +6,24 @@ Helix acts as a frontend for [Claude Code](https://docs.anthropic.com/claude-cod
 
 **Ideal for anyone who wants a persistent, always-on Claude agent without living in a terminal.** Run it once, walk away — your agent is available through your phone, browser, or messaging app whenever you need it.
 
+## Screenshots
+
+| Home | Chat |
+|------|------|
+| ![Home](screenshots/home.jpg) | ![Chat](screenshots/chat.jpg) |
+
+| Memory | Crons |
+|--------|-------|
+| ![Memory](screenshots/memory.jpg) | ![Crons](screenshots/crons.jpg) |
+
+| Config | Logs |
+|--------|------|
+| ![Config](screenshots/config.jpg) | ![Logs](screenshots/logs.jpg) |
+
+| Model Switch |
+|-------------|
+| ![Model Switch](screenshots/model-switch.jpg) |
+
 ## What You Get
 
 - **Persistent agent identity** — your agent has a name, personality, and memory that survives across sessions
