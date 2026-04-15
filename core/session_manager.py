@@ -43,6 +43,13 @@ MIGRATE_ADD_CLAUDE_SESSION_ID = """
 ALTER TABLE sessions ADD COLUMN claude_session_id TEXT;
 """
 
+MIGRATE_ADD_PENDING_CONTEXT = """
+ALTER TABLE sessions ADD COLUMN pending_context TEXT;
+"""
+
+# Number of user/assistant exchange pairs to carry forward on model switch
+CONTEXT_EXCHANGES = 30
+
 CREATE_IDX = """
 CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_channel_peer
     ON sessions (agent_id, channel, peer);
@@ -97,11 +104,12 @@ class SessionManager:
         self._db.row_factory = aiosqlite.Row
         await self._db.execute(CREATE_SESSIONS)
         await self._db.execute(CREATE_IDX)
-        # Migration: add claude_session_id column if it doesn't exist yet
-        try:
-            await self._db.execute(MIGRATE_ADD_CLAUDE_SESSION_ID)
-        except Exception:
-            pass  # column already exists
+        # Migrations — add columns if they don't exist yet
+        for migration in (MIGRATE_ADD_CLAUDE_SESSION_ID, MIGRATE_ADD_PENDING_CONTEXT):
+            try:
+                await self._db.execute(migration)
+            except Exception:
+                pass  # column already exists
         await self._db.commit()
 
     async def stop(self) -> None:
@@ -178,14 +186,59 @@ class SessionManager:
             )
             await self._db.commit()
 
+    def _build_context_block(self, session_id: str) -> Optional[str]:
+        """Format the last CONTEXT_EXCHANGES user/assistant pairs as a context block."""
+        messages = self.read_transcript(session_id)
+        if not messages:
+            return None
+        # Take last N exchange pairs (user + assistant = 2 messages per exchange)
+        tail = messages[-(CONTEXT_EXCHANGES * 2):]
+        lines = [
+            "[Context from previous session — carried forward after model switch]",
+            "",
+        ]
+        for msg in tail:
+            role = "User" if msg["role"] == "user" else "Assistant"
+            content = msg["content"]
+            # Truncate very long messages to keep token cost reasonable
+            if len(content) > 2000:
+                content = content[:2000] + "... [truncated]"
+            lines.append(f"{role}: {content}")
+        lines += ["", "[End of previous context. Continue from here with the new model.]"]
+        return "\n".join(lines)
+
     async def set_model(self, session_id: str, model_id: str) -> None:
-        """Update session model and clear claude_session_id so next turn starts fresh with the new model."""
+        """Switch model for a session.
+
+        Saves the last CONTEXT_EXCHANGES exchanges as pending_context so the
+        first turn on the new session can pick up where the old one left off.
+        Clears claude_session_id so the next turn starts a fresh Claude Code session.
+        """
+        context_block = self._build_context_block(session_id)
         async with self._lock:
             await self._db.execute(
-                "UPDATE sessions SET model=?, claude_session_id=NULL WHERE session_id=?",
-                (model_id, session_id),
+                "UPDATE sessions SET model=?, claude_session_id=NULL, pending_context=? WHERE session_id=?",
+                (model_id, context_block, session_id),
             )
             await self._db.commit()
+
+    async def pop_pending_context(self, session_id: str) -> Optional[str]:
+        """Atomically read and clear pending_context. Returns None if not set."""
+        async with self._lock:
+            async with self._db.execute(
+                "SELECT pending_context FROM sessions WHERE session_id=?",
+                (session_id,),
+            ) as cur:
+                row = await cur.fetchone()
+            if not row or not row["pending_context"]:
+                return None
+            context = row["pending_context"]
+            await self._db.execute(
+                "UPDATE sessions SET pending_context=NULL WHERE session_id=?",
+                (session_id,),
+            )
+            await self._db.commit()
+            return context
 
     async def set_claude_session_id(self, session_id: str, claude_session_id: str) -> None:
         """Persist the Claude Code session ID for --resume on future turns."""

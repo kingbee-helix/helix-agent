@@ -153,6 +153,12 @@ Available in Discord, Telegram, and the web chat:
 | `/forget <text>` | Remove something from memory |
 | `/heartbeat` | Trigger a manual heartbeat check |
 
+### Switching Models Mid-Conversation
+
+When you switch models, Helix automatically carries forward the last 30 exchanges so the new model has context on what you were working on.
+
+> **Tip:** For long or complex conversations, run `/compact` in Claude Code first before switching models. This compresses the session history into a concise summary, which makes the context handoff much cleaner and cheaper on tokens.
+
 ## Adding Permissions
 
 Helix inherits permissions from Claude Code. During setup, your home directory is automatically added. To grant access to additional directories:

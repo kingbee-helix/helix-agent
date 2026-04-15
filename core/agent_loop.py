@@ -53,6 +53,12 @@ class AgentLoop:
             try:
                 system = build_system_prompt()
 
+                # Inject context from previous session if a model switch just happened
+                if is_new_session:
+                    pending = await self.session_manager.pop_pending_context(session_id)
+                    if pending:
+                        user_message = f"{pending}\n\n{user_message}"
+
                 response_text, used_session_id = await call_claude(
                     model=model_id,
                     system=system,

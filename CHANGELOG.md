@@ -4,6 +4,14 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-04-14
+
+### Added
+- **Context preservation on model switch** — when switching models via `/model` or the web UI dropdown, Helix now captures the last 30 user/assistant exchanges and injects them as context on the first turn of the new session. Previously switching models would silently drop all in-conversation context.
+
+### Changed
+- `CONTEXT_EXCHANGES = 30` constant in `session_manager.py` controls how many exchange pairs are carried forward (configurable)
+
 ## [1.0.1] - 2026-04-14
 
 ### Fixed
