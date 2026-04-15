@@ -4,6 +4,22 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-04-15
+
+### Fixed
+- **Model dropdown alias resolution** — the dropdown was showing the wrong model because the session stores a full model ID (e.g. `claude-haiku-4-5-20251022`) but the dropdown uses aliases (e.g. `haiku`). Now resolves the session model ID against the roster to find the correct alias before syncing the dropdown.
+- **Config/session load race condition** — `loadConfig()` and `loadSessions()` were running in parallel, so the model roster wasn't available when alias resolution ran. Config now loads first, then sessions resolves correctly against the populated roster.
+
+## [1.0.5] - 2026-04-15
+
+### Fixed
+- **Model dropdown not reflecting current session model** — the dropdown was always initialized from the config default, ignoring what model the session was actually running on. Now reads the session's current model after load and syncs the dropdown to match on every page load.
+
+## [1.0.4] - 2026-04-15
+
+### Fixed
+- **`/compact → /model` context loss bug** — `set_model()` was unconditionally overwriting `pending_context` with a fresh transcript-derived block, destroying any compaction summary that `/compact` had just stored. Now checks for existing `pending_context` first and only falls back to `_build_context_block()` when none exists. The recommended workflow (`/compact` then `/model`) now works as documented.
+
 ## [1.0.3] - 2026-04-14
 
 ### Added
