@@ -623,7 +623,12 @@ function helixApp() {
     async loadSessions() {
       try {
         const r = await this.api('/api/sessions');
-        if (r.ok) this.sessions = await r.json();
+        if (r.ok) {
+          this.sessions = await r.json();
+          // Sync model dropdown to actual current session model
+          const webSession = this.sessions.find(s => s.channel === 'web' && s.peer === 'admin');
+          if (webSession?.model) this.chatModel = webSession.model;
+        }
       } catch {}
     },
 
