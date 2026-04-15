@@ -51,7 +51,7 @@ python3 main.py
 
 The venv is managed automatically — you never need to activate it manually.
 
-> **Note:** Helix does not auto-start on reboot. Use `./start.sh` to run it in the background without keeping a terminal open. You'll need to run it again if your machine restarts.
+> **Note:** Helix does not auto-start on reboot. Use `./start.sh` to run it in the background without keeping a terminal open. You'll need to run it again if your machine restarts. Attempting to set it as a systemd service for auto-restart functions will throw Claude Code "extra usage" errors, it is not supported natively in Claude Code with subscription plans and will break oauth. DO NOT DO THIS!!
 
 ## Project Structure
 
