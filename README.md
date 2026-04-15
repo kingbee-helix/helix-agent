@@ -198,6 +198,36 @@ Or manually edit `~/.claude/settings.json`.
 - **Prompt injection detection** flags suspicious patterns in messages
 - If you expose the web UI externally, use an HTTPS reverse proxy. **Do so at your own risk — Helix is designed for personal local use and external exposure is not officially supported.**
 
+## Troubleshooting
+
+### `websockets` version too old (common on Mac)
+
+macOS ships with its own Python and pip that are separate from Helix's venv. Running `pip install websockets` outside the venv installs it into the wrong Python — Helix won't see it.
+
+**Fix:**
+```bash
+cd helix-agent
+source .venv/bin/activate
+pip install --upgrade pip websockets
+```
+
+Helix requires `websockets>=16.0`. `start.sh` will now catch this and tell you exactly what to run if the version is wrong.
+
+### Helix won't start after `git pull`
+
+If a pull added new packages to `requirements.txt`, you'll need to reinstall:
+```bash
+cd helix-agent
+source .venv/bin/activate
+pip install -r requirements.txt
+./start.sh
+```
+
+### Claude Code OAuth errors
+
+- **Do not run Helix as a systemd service** — this causes Claude Code "extra usage" errors and breaks OAuth. Use `./start.sh` instead.
+- Make sure you're logged into Claude Code: `claude auth login`
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
