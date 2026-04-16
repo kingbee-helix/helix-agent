@@ -2,22 +2,25 @@
 Helix Telegram Adapter
 python-telegram-bot async polling.
 DM + group chat support. Typing indicator while processing. Slash commands intercepted.
+File attachments supported (documents and photos).
 """
 
 import asyncio
 import logging
+from typing import Optional
 
-from telegram import Update
+from telegram import Update, Bot
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 from telegram.constants import ChatAction
 
-from channels.base import ChannelAdapter
+from channels.base import ChannelAdapter, InboundMessage
 from channels.base import MessageHandler as HelixMessageHandler
-from channels.slash_commands import handle_slash, wrap_agent_slash
+from channels.slash_commands import handle_slash, HARNESS_COMMANDS, AGENT_COMMANDS
 from security.auth import AuthManager
 from security.input_validator import sanitize_for_context
 from security.secrets import get_secret
 from core.config import get_config
+from core.file_handler import validate_file, save_file, cleanup_file, build_file_context
 
 logger = logging.getLogger("helix.telegram")
 
@@ -48,6 +51,13 @@ class TelegramAdapter(ChannelAdapter):
         self._app.add_handler(
             MessageHandler(filters.COMMAND, self._on_command)
         )
+        # Handle file attachments
+        self._app.add_handler(
+            MessageHandler(filters.Document.ALL, self._on_document)
+        )
+        self._app.add_handler(
+            MessageHandler(filters.PHOTO, self._on_photo)
+        )
 
         await self._app.initialize()
         await self._app.start()
@@ -77,7 +87,6 @@ class TelegramAdapter(ChannelAdapter):
         """Handle Telegram /command messages."""
         if not update.message or not update.effective_user:
             return
-        # Rebuild as slash command (Telegram strips the /)
         content = update.message.text or ""
         await self._handle_update(update, content)
 
@@ -87,7 +96,39 @@ class TelegramAdapter(ChannelAdapter):
         content = update.message.text or ""
         await self._handle_update(update, content)
 
-    async def _handle_update(self, update: Update, content: str) -> None:
+    async def _on_document(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle file/document attachments."""
+        if not update.message or not update.effective_user:
+            return
+        doc = update.message.document
+        caption = update.message.caption or ""
+        error = validate_file(doc.file_name or "file", doc.file_size or 0)
+        if error:
+            await update.message.reply_text(error)
+            return
+        attachment_info = {
+            "file_id": doc.file_id,
+            "filename": doc.file_name or f"document_{doc.file_id[:8]}",
+        }
+        await self._handle_update(update, caption, attachment_info=attachment_info)
+
+    async def _on_photo(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle photo attachments — use largest available resolution."""
+        if not update.message or not update.effective_user:
+            return
+        photo = update.message.photo[-1]  # Largest resolution
+        caption = update.message.caption or ""
+        error = validate_file("photo.jpg", photo.file_size or 0)
+        if error:
+            await update.message.reply_text(error)
+            return
+        attachment_info = {
+            "file_id": photo.file_id,
+            "filename": f"photo_{photo.file_id[:8]}.jpg",
+        }
+        await self._handle_update(update, caption, attachment_info=attachment_info)
+
+    async def _handle_update(self, update: Update, content: str, attachment_info: Optional[dict] = None) -> None:
         cfg = get_config()
         if not cfg.telegram.enabled:
             return
@@ -102,12 +143,12 @@ class TelegramAdapter(ChannelAdapter):
             logger.warning(f"Telegram auth denied {user_id}: {deny_reason}")
             return
 
-        if not content:
+        if not content and not attachment_info:
             return
 
         # Audit log
         if self.audit_logger:
-            self.audit_logger.log("message_received", channel="telegram", sender_id=str(user_id), sender_name=sender_name, content_preview=content[:200])
+            self.audit_logger.log_message_received("telegram", str(user_id), sender_name, content[:200])
 
         # Debounce
         debounce_key = f"telegram:{user_id}"
@@ -116,7 +157,7 @@ class TelegramAdapter(ChannelAdapter):
 
         async def _process():
             await asyncio.sleep(DEBOUNCE_SECONDS)
-            await self._process_message(update, content, user_id, sender_name)
+            await self._process_message(update, content, user_id, sender_name, attachment_info)
 
         task = asyncio.create_task(_process())
         self._debounce_tasks[debounce_key] = task
@@ -127,7 +168,9 @@ class TelegramAdapter(ChannelAdapter):
         content: str,
         user_id: int,
         sender_name: str,
+        attachment_info: Optional[dict] = None,
     ) -> None:
+        chat_id = update.effective_chat.id
         channel = "telegram"
         peer = str(user_id)
 
@@ -136,7 +179,7 @@ class TelegramAdapter(ChannelAdapter):
                 for part in self._split_message(text):
                     await update.message.reply_text(part)
                 if self.audit_logger:
-                    self.audit_logger.log("message_sent", channel="telegram", recipient_id=str(user_id), content_preview=text[:200])
+                    self.audit_logger.log_message_sent("telegram", str(user_id), text[:200])
             except Exception as e:
                 logger.error(f"Telegram reply error: {e}")
 
@@ -149,7 +192,7 @@ class TelegramAdapter(ChannelAdapter):
             )
             if handled:
                 return
-            content = wrap_agent_slash(content)
+            content = self._wrap_agent_slash(content)
 
         # Injection check
         clean_content, warnings = sanitize_for_context(content)
@@ -157,10 +200,27 @@ class TelegramAdapter(ChannelAdapter):
             for w in warnings:
                 logger.warning(f"[INJECTION] Telegram {user_id}: {w}")
                 if self.audit_logger:
-                    self.audit_logger.log("injection_detected", channel="telegram", sender_id=str(user_id), pattern=w, content_preview=content[:200])
+                    self.audit_logger.log_injection_detected("telegram", str(user_id), w, content[:200])
             clean_content = "[SECURITY WARNING: Possible injection attempt detected]\n\n" + clean_content
 
-        # Run agent loop with persistent typing indicator (refreshes every 4s — Telegram expires it after ~5s)
+        # ── File attachment handling ──
+        file_path = None
+        if attachment_info:
+            try:
+                tg_file = await self._app.bot.get_file(attachment_info["file_id"])
+                data = bytes(await tg_file.download_as_bytearray())
+                file_path = save_file(attachment_info["filename"], data)
+                if file_path:
+                    clean_content = build_file_context(file_path, clean_content)
+                else:
+                    await send_reply("Failed to process the attached file. Please try again.")
+                    return
+            except Exception as e:
+                logger.error(f"Telegram file download error: {e}")
+                await send_reply("Failed to download the attached file. Please try again.")
+                return
+
+        # Run agent loop with persistent typing indicator (refreshes every 4s — Telegram expires after ~5s)
         stop_typing = asyncio.Event()
 
         async def _keep_typing() -> None:
@@ -184,7 +244,7 @@ class TelegramAdapter(ChannelAdapter):
                 await send_reply(full_response)
         except Exception as e:
             logger.error(f"Agent loop error: {e}")
-            await send_reply("Something went wrong. Please try again.")
+            await send_reply(f"Something went wrong. {e}")
         finally:
             stop_typing.set()
             typing_task.cancel()
@@ -192,4 +252,20 @@ class TelegramAdapter(ChannelAdapter):
                 await typing_task
             except asyncio.CancelledError:
                 pass
+            cleanup_file(file_path)
 
+    def _wrap_agent_slash(self, command_str: str) -> str:
+        parts = command_str.split(None, 1)
+        cmd = parts[0].lower()
+        args = parts[1] if len(parts) > 1 else ""
+
+        if cmd == "/think":
+            level = args or "normal"
+            return f"[Deep thinking mode: {level}] Please think carefully and thoroughly about the following, then provide your response."
+        elif cmd == "/do":
+            return f"[Task request] Please complete the following task:\n\n{args}"
+        elif cmd == "/remember":
+            return f"[Memory request] Please save the following to your memory:\n\n{args}"
+        elif cmd == "/forget":
+            return f"[Memory request] Please remove the following from your memory if you have it:\n\n{args}"
+        return command_str
