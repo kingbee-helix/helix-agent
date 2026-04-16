@@ -7,7 +7,7 @@ All notable changes to Helix Agent will be documented here.
 ## [1.1.0] - 2026-04-16
 
 ### Added
-- **Discord status indicators** — messages now show `thinking...` immediately on receipt, switching to `working on it...` after 4 seconds, then replaced with the final reply. Native Discord "V is typing..." indicator fixed and running alongside.
+- **Discord status indicators** — messages now show `thinking...` immediately on receipt, switching to `working on it...` after 4 seconds, then replaced with the final reply. Native Discord "[agent name] is typing..." indicator fixed and running alongside.
 - **File attachment support (Discord + Telegram)** — drop any file into Discord or Telegram and the agent receives it. 5MB cap, blacklist for large disk images (`.iso`, `.dmg`, `.vmdk`, etc.). All code and script types including `.sh`, `.exe`, `.py` are fully supported.
 - **New `core/file_handler.py`** — centralized file validation, save-to-temp, cleanup, and context injection. Temp files written to `/tmp/helix_uploads/` and cleaned up automatically after each response.
 - **Preflight checks in `start.sh`** — on every start, Helix now verifies: venv exists, Python 3.10+, Claude Code CLI installed, all `requirements.txt` packages present and correct version. Clear error messages with exact fix commands on any failure.
