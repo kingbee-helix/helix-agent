@@ -4,6 +4,11 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-04-16
+
+### Changed
+- **`/status`** — removed max output tokens line (static model cap, not useful as a runtime metric)
+
 ## [1.1.2] - 2026-04-16
 
 ### Added

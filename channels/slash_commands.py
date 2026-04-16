@@ -175,8 +175,6 @@ async def handle_slash(
             f"Compactions: `{session['compacted']}`",
             ctx_line,
         ]
-        if max_output:
-            lines.append(f"Max output: `{max_output:,}` tokens")
         lines.append(f"Channel: {channel} | Peer: {peer}")
 
         await send_fn("\n".join(lines))
