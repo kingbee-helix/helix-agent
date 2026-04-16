@@ -218,6 +218,23 @@ pip install --upgrade pip websockets
 
 Helix requires `websockets>=16.0`. `start.sh` will now catch this and tell you exactly what to run if the version is wrong.
 
+### `No module named 'cryptography'` (common on Mac)
+
+This happens when the `cryptography` package failed to install during setup — usually because pip couldn't find a pre-built wheel for your macOS + Python combination and build tools weren't available.
+
+**Fix:**
+```bash
+cd helix-agent
+source .venv/bin/activate
+pip install --upgrade pip cryptography
+```
+
+If that still fails, make sure Xcode command line tools are installed:
+```bash
+xcode-select --install
+```
+Then retry the pip install above.
+
 ### Helix won't start after `git pull`
 
 If a pull added new packages to `requirements.txt`, you'll need to reinstall:

@@ -4,6 +4,14 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-04-16
+
+### Fixed
+- **`No module named 'cryptography'` on Mac** — lowered `cryptography` version pin from `>=46.0.0` to `>=41.0.0`. v46 is very new and lacks pre-built wheels for many macOS + Python combinations, causing pip to attempt a source build that fails without Rust/Xcode tools. v41+ has broad Mac wheel coverage and is fully compatible.
+
+### Docs
+- Added `No module named 'cryptography'` troubleshooting entry to README with fix steps and Xcode CLI tools note
+
 ## [1.1.3] - 2026-04-16
 
 ### Changed

@@ -17,7 +17,7 @@ uvicorn[standard]>=0.32.0
 
 # Security
 argon2-cffi>=23.1.0
-cryptography>=46.0.0
+cryptography>=41.0.0
 
 # Already installed (pinned for reproducibility)
 aiohttp>=3.13.4
