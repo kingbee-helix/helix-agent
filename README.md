@@ -198,6 +198,10 @@ Or manually edit `~/.claude/settings.json`.
 - **Prompt injection detection** flags suspicious patterns in messages
 - If you expose the web UI externally, use an HTTPS reverse proxy. **Do so at your own risk — Helix is designed for personal local use and external exposure is not officially supported.**
 
+## Known Limitations
+
+- **Web UI chat clears on page refresh** — if you refresh the browser, the chat window will appear empty. This is a display-only issue. The session context is fully preserved on disk and by Claude Code, so your agent picks up right where it left off on your next message. No context is lost.
+
 ## Troubleshooting
 
 ### `websockets` version too old (common on Mac)
