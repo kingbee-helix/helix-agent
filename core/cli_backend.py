@@ -101,7 +101,17 @@ async def _invoke(
     if data.get("is_error"):
         raise RuntimeError(f"Claude error: {data.get('result', data)}")
 
-    return data.get("result", ""), data.get("session_id", "")
+    # Extract per-model usage stats for context window tracking
+    model_usage = data.get("modelUsage", {}).get(model, {})
+    usage = {
+        "input_tokens": model_usage.get("inputTokens", 0),
+        "output_tokens": model_usage.get("outputTokens", 0),
+        "cache_read_input_tokens": model_usage.get("cacheReadInputTokens", 0),
+        "context_window": model_usage.get("contextWindow", 0),
+        "max_output_tokens": model_usage.get("maxOutputTokens", 0),
+    }
+
+    return data.get("result", ""), data.get("session_id", ""), usage
 
 
 async def call_claude(
@@ -111,9 +121,12 @@ async def call_claude(
     claude_session_id: Optional[str] = None,
     is_new_session: bool = False,
     timeout: int = DEFAULT_TIMEOUT,
-) -> Tuple[str, str]:
+) -> Tuple[str, str, dict]:
     """
-    Call claude CLI. Returns (response_text, claude_session_id_used).
+    Call claude CLI. Returns (response_text, claude_session_id_used, usage_dict).
+
+    usage_dict contains: input_tokens, output_tokens, cache_read_input_tokens,
+    context_window, max_output_tokens — extracted from modelUsage in the CLI response.
 
     - New session (is_new_session=True or no claude_session_id): --session-id <new_uuid>
     - Resume: --resume <claude_session_id>

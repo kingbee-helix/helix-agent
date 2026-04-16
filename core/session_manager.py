@@ -47,6 +47,14 @@ MIGRATE_ADD_PENDING_CONTEXT = """
 ALTER TABLE sessions ADD COLUMN pending_context TEXT;
 """
 
+MIGRATE_ADD_CONTEXT_WINDOW = """
+ALTER TABLE sessions ADD COLUMN context_window INTEGER NOT NULL DEFAULT 0;
+"""
+
+MIGRATE_ADD_MAX_OUTPUT_TOKENS = """
+ALTER TABLE sessions ADD COLUMN max_output_tokens INTEGER NOT NULL DEFAULT 0;
+"""
+
 # Number of user/assistant exchange pairs to carry forward on model switch
 CONTEXT_EXCHANGES = 30
 
@@ -105,7 +113,8 @@ class SessionManager:
         await self._db.execute(CREATE_SESSIONS)
         await self._db.execute(CREATE_IDX)
         # Migrations — add columns if they don't exist yet
-        for migration in (MIGRATE_ADD_CLAUDE_SESSION_ID, MIGRATE_ADD_PENDING_CONTEXT):
+        for migration in (MIGRATE_ADD_CLAUDE_SESSION_ID, MIGRATE_ADD_PENDING_CONTEXT,
+                          MIGRATE_ADD_CONTEXT_WINDOW, MIGRATE_ADD_MAX_OUTPUT_TOKENS):
             try:
                 await self._db.execute(migration)
             except Exception:
@@ -178,12 +187,30 @@ class SessionManager:
 
             return session
 
-    async def update_activity(self, session_id: str, token_count: int = 0) -> None:
+    async def update_activity(self, session_id: str, usage: Optional[dict] = None) -> None:
+        """Update last_active and accumulate token usage stats from a CLI response."""
+        token_delta = 0
+        context_window = 0
+        max_output_tokens = 0
+        if usage:
+            token_delta = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+            context_window = usage.get("context_window", 0)
+            max_output_tokens = usage.get("max_output_tokens", 0)
+
         async with self._lock:
-            await self._db.execute(
-                "UPDATE sessions SET last_active=?, token_count=token_count+? WHERE session_id=?",
-                (_now_ts(), token_count, session_id),
-            )
+            if context_window:
+                await self._db.execute(
+                    """UPDATE sessions
+                       SET last_active=?, token_count=token_count+?,
+                           context_window=?, max_output_tokens=?
+                       WHERE session_id=?""",
+                    (_now_ts(), token_delta, context_window, max_output_tokens, session_id),
+                )
+            else:
+                await self._db.execute(
+                    "UPDATE sessions SET last_active=?, token_count=token_count+? WHERE session_id=?",
+                    (_now_ts(), token_delta, session_id),
+                )
             await self._db.commit()
 
     def _build_context_block(self, session_id: str) -> Optional[str]:

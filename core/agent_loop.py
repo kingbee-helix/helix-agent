@@ -59,7 +59,7 @@ class AgentLoop:
                     if pending:
                         user_message = f"{pending}\n\n{user_message}"
 
-                response_text, used_session_id = await call_claude(
+                response_text, used_session_id, usage = await call_claude(
                     model=model_id,
                     system=system,
                     user_message=user_message,
@@ -79,7 +79,7 @@ class AgentLoop:
                 # Audit log
                 self.session_manager.append_message(session_id, "user", user_message)
                 self.session_manager.append_message(session_id, "assistant", response_text)
-                await self.session_manager.update_activity(session_id)
+                await self.session_manager.update_activity(session_id, usage)
 
                 yield response_text
 

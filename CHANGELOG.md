@@ -4,6 +4,16 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-04-16
+
+### Added
+- **Context window tracking in `/status`** — `/status` now shows real-time context window usage (`17,234 / 200,000 (8.6%)`) and max output tokens, extracted from the Claude CLI's `modelUsage` response on every turn. Previously only showed a static estimated token count. Useful for knowing when you're approaching context limits and should `/compact`.
+
+### Changed
+- `cli_backend.py` — `call_claude()` now returns a 3-tuple `(response_text, session_id, usage_dict)` containing per-model token stats from the CLI JSON response
+- `session_manager.py` — added `context_window` and `max_output_tokens` columns (auto-migrated); `update_activity()` now accepts and persists usage data
+- `agent_loop.py` — passes usage dict from `call_claude()` through to `update_activity()`
+
 ## [1.1.1] - 2026-04-16
 
 ### Fixed

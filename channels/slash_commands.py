@@ -125,7 +125,7 @@ async def handle_slash(
             compact_model = cfg.models.default_id
 
         try:
-            summary, _ = await call_claude(
+            summary, _, _usage = await call_claude(
                 model=compact_model,
                 system="You are an expert at summarizing technical conversations clearly and concisely.",
                 user_message=summary_prompt,
@@ -156,16 +156,29 @@ async def handle_slash(
         import zoneinfo
         tz = zoneinfo.ZoneInfo(cfg.timezone)
         last = datetime.fromtimestamp(session["last_active"], tz).strftime(f"%Y-%m-%d %H:%M {cfg.timezone}")
+        tokens_used = session.get("token_count", 0)
+        ctx_window = session.get("context_window", 0)
+        max_output = session.get("max_output_tokens", 0)
+
+        if ctx_window:
+            pct = (tokens_used / ctx_window * 100)
+            ctx_line = f"Context: `{tokens_used:,} / {ctx_window:,}` ({pct:.1f}%)"
+        else:
+            ctx_line = f"Tokens (est): `{tokens_used:,}`"
+
         lines = [
             "**Helix Status**",
             f"Agent: `{session['agent_id']}`",
             f"Session ID: `{session['session_id'][:8]}...`",
             f"Model: `{session['model']}`",
             f"Last active: {last}",
-            f"Compactions: {session['compacted']}",
-            f"Tokens (est): {session['token_count']:,}",
-            f"Channel: {channel} | Peer: {peer}",
+            f"Compactions: `{session['compacted']}`",
+            ctx_line,
         ]
+        if max_output:
+            lines.append(f"Max output: `{max_output:,}` tokens")
+        lines.append(f"Channel: {channel} | Peer: {peer}")
+
         await send_fn("\n".join(lines))
         return True
 
