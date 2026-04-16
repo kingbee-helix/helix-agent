@@ -4,6 +4,11 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-04-16
+
+### Fixed
+- **Model dropdown confirmation message** — switching models via the web UI dropdown now displays a `Model switched to \`{alias}\`` confirmation message in the chat, matching the feedback already shown when using the `/model` slash command. Previously the switch happened silently with no visible indication beyond running `/status`.
+
 ## [1.1.0] - 2026-04-16
 
 ### Added

@@ -855,7 +855,15 @@ function helixApp() {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` },
           body: JSON.stringify({ model: alias })
         });
-        if (!r.ok) console.error('Model switch failed:', await r.text());
+        if (r.ok) {
+          this.chatMessages.push({ id: ++this.msgCounter, role: 'assistant', content: `Model switched to \`${alias}\`` });
+          this.$nextTick(() => {
+            const el = document.getElementById('chat-messages');
+            if (el) el.scrollTop = el.scrollHeight;
+          });
+        } else {
+          console.error('Model switch failed:', await r.text());
+        }
       } catch (e) {
         console.error('Model switch error:', e);
       }
