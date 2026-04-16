@@ -201,6 +201,7 @@ Or manually edit `~/.claude/settings.json`.
 ## Known Limitations
 
 - **Web UI chat clears on page refresh** — if you refresh the browser, the chat window will appear empty. This is a display-only issue. The session context is fully preserved on disk and by Claude Code, so your agent picks up right where it left off on your next message. No context is lost.
+- **First message delay after model switch** - if you switch models mid conversation, when you send the first message after the switch there will be a slight delay as the agent will have to grab the previous 30 messages of context, cold start the new session, and build its system prompt. This only happens on the first message, after that it returns to normal. The delay is necessary for memory, system, and context persistence across compactions, summarizations, and model switches. 
 
 ## Troubleshooting
 
