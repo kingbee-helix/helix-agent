@@ -81,7 +81,7 @@ if [ -n "$DEP_ISSUES" ]; then
     exit 1
 fi
 
-# ── Launch ────────────────────────────────────────────────────────────────────
+# ── Launch ──────────────────────────────────────────────────────────────────────
 nohup env PYTHONUNBUFFERED=1 "$PYTHON" "$HELIX_DIR/main.py" >> "$LOG_FILE" 2>&1 &
 echo $! > "$PID_FILE"
 echo "Helix started (PID $(cat $PID_FILE))"
