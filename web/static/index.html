@@ -889,6 +889,7 @@ function helixApp() {
         const msg = r.ok
           ? `📸 ${data.message || 'Snapshot saved.'}`
           : `❌ Snapshot failed: ${data.detail || 'Unknown error'}`;
+        if (r.ok) await this.loadMemory();
         this.chatMessages.push({ id: ++this.msgCounter, role: 'assistant', content: msg });
         this.$nextTick(() => {
           const el = document.getElementById('chat-messages');
