@@ -4,6 +4,11 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-04-16
+
+### Fixed
+- **"working on it..." placeholder hanging on NO_REPLY** — status indicator message was being silently dropped when Discord's API failed the delete call (exception caught with `pass`). Fixed with two changes: (1) `send_reply` now deletes the placeholder before falling back to a fresh message when the edit fails, so no orphaned "working on it..." is left alongside the real reply; (2) a safety-net delete in the `finally` block guarantees cleanup even if the primary NO_REPLY path silently fails. `status_msg_disposed` flag tracks whether the placeholder was already handled so the safety net doesn't double-fire.
+
 ## [1.1.9] - 2026-04-16
 
 ### Added

@@ -218,6 +218,7 @@ class DiscordAdapter(ChannelAdapter):
 
         # ── Status indicators: thinking... → working on it... → reply ──
         status_msg = None
+        status_msg_disposed = False  # Track whether status_msg was edited/deleted
         try:
             status_msg = await message.reply("thinking...", mention_author=False)
         except Exception:
@@ -254,6 +255,7 @@ class DiscordAdapter(ChannelAdapter):
         switch_task = asyncio.create_task(_switch_status())
 
         async def send_reply(text: str) -> None:
+            nonlocal status_msg_disposed
             try:
                 await message.remove_reaction(V_EMOJI, self._client.user)
             except Exception:
@@ -262,8 +264,14 @@ class DiscordAdapter(ChannelAdapter):
             if status_msg:
                 try:
                     await status_msg.edit(content=parts[0])
+                    status_msg_disposed = True
                 except Exception:
-                    # Fallback if edit fails
+                    # Edit failed — delete placeholder then send fresh
+                    try:
+                        await status_msg.delete()
+                        status_msg_disposed = True
+                    except Exception:
+                        pass
                     if is_dm:
                         await self._send_to_channel(message.channel, parts[0])
                     else:
@@ -294,6 +302,7 @@ class DiscordAdapter(ChannelAdapter):
                 if status_msg:
                     try:
                         await status_msg.delete()
+                        status_msg_disposed = True
                     except Exception:
                         pass
         except Exception as e:
@@ -311,6 +320,13 @@ class DiscordAdapter(ChannelAdapter):
                 await switch_task
             except asyncio.CancelledError:
                 pass
+            # Safety net: if status_msg was never disposed (e.g. delete failed silently),
+            # make one final attempt to remove the placeholder
+            if not status_msg_disposed and status_msg:
+                try:
+                    await status_msg.delete()
+                except Exception:
+                    pass
             cleanup_file(file_path)
 
     def _wrap_agent_slash(self, command_str: str) -> str:
