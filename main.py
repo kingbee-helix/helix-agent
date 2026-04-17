@@ -16,6 +16,8 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+VERSION = "1.0.3"
+
 # ─── Logging setup ────────────────────────────────────────────────────────────
 
 LOG_PATH = Path.home() / ".helix" / "logs" / "helix.log"
@@ -284,7 +286,7 @@ if __name__ == "__main__":
             _cli_config()
             sys.exit(0)
         elif cmd == "version":
-            print("Helix 1.0.0")
+            print(f"Helix {VERSION}")
             sys.exit(0)
         elif cmd == "help":
             print(__doc__)

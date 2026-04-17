@@ -457,10 +457,10 @@ async def take_snapshot(channel: str, peer: str):
     from core.cli_backend import call_claude
     compaction_model = cfg.models.compaction_id
     summary, _, _ = await call_claude(
-        prompt=snapshot_prompt,
         model=compaction_model,
-        session_id=None,
-        system=None,
+        system="You are an expert at writing detailed memory entries for AI agent logs.",
+        user_message=snapshot_prompt,
+        is_new_session=True,
     )
 
     if not summary:

@@ -53,8 +53,20 @@ def _load_bootstrap(workspace: Path) -> str:
     return header + "\n".join(sections)
 
 
-def build_system_prompt() -> str:
-    """Return the full system prompt (bootstrap files only)."""
+def build_system_prompt(is_new_session: bool = True) -> str:
+    """Return the system prompt for an agent turn.
+
+    On a new session (``is_new_session=True``) the full bootstrap is loaded
+    from the workspace files and injected as the system prompt.  Claude will
+    cache this prefix across turns for the lifetime of the session.
+
+    On resumed sessions (``is_new_session=False``) Claude already holds the
+    bootstrap in its session context via ``--resume``.  Re-sending it every
+    turn busts the prompt cache and wastes tokens, so we return an empty
+    string and let the session carry the context.
+    """
+    if not is_new_session:
+        return ""
     cfg = get_config()
     workspace = Path(cfg.workspace_path)
     return _load_bootstrap(workspace)

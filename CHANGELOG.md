@@ -2,7 +2,16 @@
 
 All notable changes to Helix Agent will be documented here.
 
-## [Unreleased]
+## [Unreleased] - 2026-04-17
+
+### Fixed
+- Version string now reads from single source of truth (`VERSION = "1.0.3"` constant in `main.py`; was hardcoded as `"Helix 1.0.0"` in the `version` CLI handler)
+- Fixed broken `call_claude()` invocation in snapshot route (`web/app.py`): replaced wrong kwargs `prompt=` and `session_id=` with correct `user_message=` and `is_new_session=True`; added a non-None `system=` string
+- Sanitized file upload filenames in `core/file_handler.py` using `Path.name` to strip path-separator-based traversal attacks; added collision handling that appends a short UUID suffix when the target file already exists
+- Context engine (`core/context_engine.py`) now only loads workspace bootstrap files on new sessions (`is_new_session=True`); resumed sessions return an empty system prompt so the prompt cache is not busted on every turn
+
+### Added
+- Initial test suite (`tests/test_helix.py`) covering: file upload sanitization, context engine new vs resumed session behaviour, version constant, snapshot route kwargs regression, session create/switch/compact flows, and slash command routing (`/status`, `/new`, `/model`, unknown command)
 
 ## [1.2.0] - 2026-04-16
 

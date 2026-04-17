@@ -51,7 +51,7 @@ class AgentLoop:
 
         async with self._get_lock(session_id):
             try:
-                system = build_system_prompt()
+                system = build_system_prompt(is_new_session=is_new_session)
 
                 # Inject context from previous session if a model switch just happened
                 if is_new_session:

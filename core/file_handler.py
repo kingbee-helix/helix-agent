@@ -5,6 +5,7 @@ Files are downloaded by their respective adapters and passed here as bytes.
 """
 
 import logging
+import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -21,6 +22,35 @@ BLACKLISTED_EXTENSIONS = {
 UPLOAD_DIR = Path("/tmp/helix_uploads")
 
 
+def _sanitize_filename(filename: str) -> str:
+    """Strip path separators and return just the base filename component.
+
+    Guards against directory traversal attacks where a malicious filename
+    like ``../../etc/passwd`` would escape the upload directory.
+    """
+    # Use Path.name to strip any directory components, then strip remaining
+    # separators/whitespace that could cause issues.
+    name = Path(filename).name
+    # Replace any remaining path-separator-like characters
+    name = name.replace("/", "_").replace("\\", "_")
+    # Strip leading dots to avoid hidden-file tricks (keep extension dots)
+    if name.startswith(".") and "." in name[1:]:
+        # e.g. ".bashrc" → keep as-is; ".." → replace
+        pass
+    name = name.strip() or "upload"
+    return name
+
+
+def _resolve_collision(dest: Path) -> Path:
+    """If *dest* already exists, append a short UUID suffix before the extension."""
+    if not dest.exists():
+        return dest
+    suffix = dest.suffix
+    stem = dest.stem
+    short_id = uuid.uuid4().hex[:8]
+    return dest.with_name(f"{stem}_{short_id}{suffix}")
+
+
 def validate_file(filename: str, size: int) -> Optional[str]:
     """Validate before downloading. Returns error string or None if valid."""
     if size > MAX_FILE_SIZE:
@@ -33,10 +63,16 @@ def validate_file(filename: str, size: int) -> Optional[str]:
 
 
 def save_file(filename: str, data: bytes) -> Optional[Path]:
-    """Save bytes to the upload temp directory. Returns path or None on failure."""
+    """Save bytes to the upload temp directory. Returns path or None on failure.
+
+    The filename is sanitized to remove path separators before use, and
+    collision handling appends a short UUID suffix when the target path
+    already exists.
+    """
     try:
         UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-        dest = UPLOAD_DIR / filename
+        safe_name = _sanitize_filename(filename)
+        dest = _resolve_collision(UPLOAD_DIR / safe_name)
         dest.write_bytes(data)
         return dest
     except Exception as e:
