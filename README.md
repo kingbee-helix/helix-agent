@@ -39,7 +39,9 @@ Helix acts as a frontend for [Claude Code](https://docs.anthropic.com/claude-cod
 - **Python 3.10+**
 - **Claude Code CLI** — [install here](https://docs.anthropic.com/claude-code)
 - **Anthropic subscription** — Claude Pro or Max (Helix uses your subscription via Claude Code, no API key needed)
-- **Linux or macOS** (Windows via WSL should work but is untested)
+- **Linux** (Ubuntu/Debian recommended — this is the primary supported platform)
+- **Windows via WSL** — should work but untested
+- **macOS** — not officially supported due to native dependency build issues
 
 ## Quick Start
 
@@ -204,36 +206,6 @@ Or manually edit `~/.claude/settings.json`.
 - **First message delay after model switch** - if you switch models mid conversation, when you send the first message after the switch there will be a slight delay as the agent will have to grab the previous 30 messages of context, cold start the new session, and build its system prompt. This only happens on the first message, after that it returns to normal. The delay is necessary for memory, system, and context persistence across compactions, summarizations, and model switches. 
 
 ## Troubleshooting
-
-### `websockets` version too old (common on Mac)
-
-macOS ships with its own Python and pip that are separate from Helix's venv. Running `pip install websockets` outside the venv installs it into the wrong Python — Helix won't see it.
-
-**Fix:**
-```bash
-cd helix-agent
-source .venv/bin/activate
-pip install --upgrade pip websockets
-```
-
-Helix requires `websockets>=16.0`. `start.sh` will now catch this and tell you exactly what to run if the version is wrong.
-
-### `No module named 'cryptography'` or `No module named 'argon2'` (common on Mac)
-
-These packages have native extensions that can fail to install on Mac without the right build tools. If you see either error during setup:
-
-**Fix:**
-```bash
-cd helix-agent
-source .venv/bin/activate
-pip install --upgrade pip cryptography argon2-cffi
-```
-
-If that still fails, make sure Xcode command line tools are installed first:
-```bash
-xcode-select --install
-```
-Then retry the pip install above.
 
 ### Helix won't start after `git pull`
 

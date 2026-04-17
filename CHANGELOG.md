@@ -4,6 +4,12 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-04-16
+
+### Changed
+- **Platform support** — macOS removed as a supported platform. Too many native dependency build issues without significant friction. Linux (Ubuntu/Debian) is the primary supported platform. Windows via WSL is untested but should work.
+- Removed Mac-specific troubleshooting entries from README
+
 ## [1.1.5] - 2026-04-16
 
 ### Fixed
