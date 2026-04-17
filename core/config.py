@@ -25,7 +25,7 @@ class ModelEntry(BaseModel):
 
 class ModelsConfig(BaseModel):
     roster: list[ModelEntry] = Field(default_factory=lambda: [
-        ModelEntry(id="claude-haiku-4-5-20251022", alias="haiku", tier="fast",      description="Heartbeats, compaction, simple tasks"),
+        ModelEntry(id="claude-haiku-4-5",  alias="haiku", tier="fast",      description="Heartbeats, compaction, simple tasks"),
         ModelEntry(id="claude-sonnet-4-6",          alias="sonnet", tier="balanced", description="General work, default"),
         ModelEntry(id="claude-opus-4-6",            alias="opus",   tier="powerful", description="Complex reasoning, heavy tasks"),
     ])

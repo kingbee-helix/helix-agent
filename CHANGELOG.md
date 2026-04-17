@@ -4,6 +4,11 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.1.7] - 2026-04-16
+
+### Fixed
+- **Haiku model ID** — changed from `claude-haiku-4-5-20251022` to `claude-haiku-4-5` to match the naming convention of all other models (`claude-sonnet-4-6`, `claude-opus-4-6`). The date-suffixed ID was causing haiku to fail silently.
+
 ## [1.1.6] - 2026-04-16
 
 ### Changed
