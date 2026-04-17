@@ -39,9 +39,9 @@ Helix acts as a frontend for [Claude Code](https://docs.anthropic.com/claude-cod
 - **Python 3.10+**
 - **Claude Code CLI** — [install here](https://docs.anthropic.com/claude-code)
 - **Anthropic subscription** — Claude Pro or Max (Helix uses your subscription via Claude Code, no API key needed)
-- **Linux** (Ubuntu/Debian recommended — this is the primary supported platform)
+- **Linux** (Ubuntu/Debian recommended — primary supported platform)
+- **macOS** — works, but Apple's Python environment can cause native dependency issues on initial setup. You can work through them manually or open the Helix directory in Claude Code and let it resolve the dependencies for you.
 - **Windows via WSL** — should work but untested
-- **macOS** — not officially supported due to native dependency build issues
 
 ## Quick Start
 

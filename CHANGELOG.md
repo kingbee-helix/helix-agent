@@ -4,6 +4,11 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.1.8] - 2026-04-16
+
+### Docs
+- **macOS support clarified** — Mac works but has rough edges on initial setup due to native Python dependency differences. README now notes that Claude Code can be used to resolve dependency issues if they come up.
+
 ## [1.1.7] - 2026-04-16
 
 ### Fixed
