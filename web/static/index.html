@@ -162,6 +162,13 @@
             <option :value="m.alias" x-text="m.alias + ' — ' + m.description"></option>
           </template>
         </select>
+        <div class="ml-auto">
+          <button @click="takeSnapshot()" :disabled="snapshotBusy"
+            class="flex items-center gap-1.5 px-3 py-1 text-xs rounded border border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title="Save a detailed memory snapshot of this conversation to today's log (session untouched)">
+            <span x-text="snapshotBusy ? '📸 Saving...' : '📸 Snapshot'"></span>
+          </button>
+        </div>
       </div>
       <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
         <template x-for="msg in chatMessages" :key="msg.id">
@@ -525,6 +532,7 @@ function helixApp() {
     newModel: { id: '', alias: '', description: '', tier: 'balanced' },
     modelAdded: false,
     msgCounter: 0,
+    snapshotBusy: false,
     // Crons state
     crons: [],
     cronFormOpen: false,
@@ -866,6 +874,30 @@ function helixApp() {
         }
       } catch (e) {
         console.error('Model switch error:', e);
+      }
+    },
+
+    async takeSnapshot() {
+      if (this.snapshotBusy) return;
+      this.snapshotBusy = true;
+      try {
+        const r = await fetch(`/api/sessions/web/admin/snapshot`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${this.token}` },
+        });
+        const data = await r.json();
+        const msg = r.ok
+          ? `📸 ${data.message || 'Snapshot saved.'}`
+          : `❌ Snapshot failed: ${data.detail || 'Unknown error'}`;
+        this.chatMessages.push({ id: ++this.msgCounter, role: 'assistant', content: msg });
+        this.$nextTick(() => {
+          const el = document.getElementById('chat-messages');
+          if (el) el.scrollTop = el.scrollHeight;
+        });
+      } catch (e) {
+        this.chatMessages.push({ id: ++this.msgCounter, role: 'assistant', content: `❌ Snapshot error: ${e.message}` });
+      } finally {
+        this.snapshotBusy = false;
       }
     },
 

@@ -413,6 +413,72 @@ async def _execute_cron(cron_id: str):
         _save(cfg2)
 
 
+# ─── Snapshot API ────────────────────────────────────────────────────────────
+
+@app.post("/api/sessions/{channel}/{peer}/snapshot", dependencies=[Depends(require_auth)])
+async def take_snapshot(channel: str, peer: str):
+    """Write a detailed memory snapshot of the current session to today's daily log.
+    Session is left completely untouched — no compaction, no context loss."""
+    if not _session_manager:
+        raise HTTPException(404, "Session manager not running")
+    if not _agent_loop:
+        raise HTTPException(503, "Agent loop not running")
+
+    cfg = get_config()
+    tz = zoneinfo.ZoneInfo(cfg.timezone)
+    today = datetime.now(tz).strftime("%Y-%m-%d")
+    ts = datetime.now(tz).strftime("%H:%M")
+
+    session = await _session_manager.get_or_create(channel, peer)
+    session_id = session["session_id"]
+    messages = _session_manager.read_transcript(session_id)
+
+    if not messages:
+        return {"status": "empty", "message": "No conversation to snapshot."}
+
+    # Build a plain-text transcript for the summarization prompt
+    transcript_text = "\n\n".join(
+        f"[{m['role'].upper()}]: {m['content']}" for m in messages
+    )
+
+    snapshot_prompt = (
+        "You are writing a detailed memory entry for a personal AI agent's daily log. "
+        "Below is a conversation transcript. Your job is to produce a thorough, structured "
+        "summary that captures: key topics discussed, decisions made, tasks completed, "
+        "important facts or preferences shared by the user, any follow-up items, and "
+        "anything the agent should remember for future conversations. "
+        "Write in past tense, third-person style (e.g. 'User asked about...', 'Agent explained...'). "
+        "Be detailed — this entry replaces the agent's in-context memory before a compaction. "
+        "Do NOT include any preamble like 'Here is the summary'. Just the memory entry.\n\n"
+        f"TRANSCRIPT:\n{transcript_text}"
+    )
+
+    # Use the compaction model (haiku) to write the snapshot
+    from core.cli_backend import call_claude
+    compaction_model = cfg.models.compaction_id
+    summary, _, _ = await call_claude(
+        prompt=snapshot_prompt,
+        model=compaction_model,
+        session_id=None,
+        system=None,
+    )
+
+    if not summary:
+        raise HTTPException(500, "Snapshot generation returned empty response")
+
+    # Append to today's daily memory file
+    memory_dir = Path(cfg.workspace_path) / "memory"
+    memory_dir.mkdir(parents=True, exist_ok=True)
+    memory_path = memory_dir / f"{today}.md"
+
+    entry = f"\n\n---\n\n## 📸 Session Snapshot [{ts}]\n\n{summary.strip()}\n"
+    with open(memory_path, "a", encoding="utf-8") as f:
+        f.write(entry)
+
+    logger.info(f"Snapshot written to {memory_path}")
+    return {"status": "ok", "message": f"Snapshot saved to memory/{today}.md", "date": today}
+
+
 # ─── Logs API ─────────────────────────────────────────────────────────────────
 
 @app.get("/api/logs/audit", dependencies=[Depends(require_auth)])

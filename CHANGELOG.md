@@ -4,6 +4,12 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.1.9] - 2026-04-16
+
+### Added
+- **Snapshot button in web UI chat** — `📸 Snapshot` button in the chat header writes a detailed memory checkpoint of the current conversation to today's daily log (`memory/YYYY-MM-DD.md`). The live session is left completely untouched — no compaction, no context loss. Use this before a compaction to preserve rich detail that summaries often drop. Confirmation appears inline in chat when done.
+- **`POST /api/sessions/{channel}/{peer}/snapshot`** — new REST endpoint backing the snapshot button. Reads the session transcript, sends it to the compaction model (haiku) with a thorough memory-writing prompt, and appends the result as a timestamped `## 📸 Session Snapshot [HH:MM]` block to the daily log.
+
 ## [1.1.8] - 2026-04-16
 
 ### Docs
