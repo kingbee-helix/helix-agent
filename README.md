@@ -218,18 +218,18 @@ pip install --upgrade pip websockets
 
 Helix requires `websockets>=16.0`. `start.sh` will now catch this and tell you exactly what to run if the version is wrong.
 
-### `No module named 'cryptography'` (common on Mac)
+### `No module named 'cryptography'` or `No module named 'argon2'` (common on Mac)
 
-This happens when the `cryptography` package failed to install during setup — usually because pip couldn't find a pre-built wheel for your macOS + Python combination and build tools weren't available.
+These packages have native extensions that can fail to install on Mac without the right build tools. If you see either error during setup:
 
 **Fix:**
 ```bash
 cd helix-agent
 source .venv/bin/activate
-pip install --upgrade pip cryptography
+pip install --upgrade pip cryptography argon2-cffi
 ```
 
-If that still fails, make sure Xcode command line tools are installed:
+If that still fails, make sure Xcode command line tools are installed first:
 ```bash
 xcode-select --install
 ```

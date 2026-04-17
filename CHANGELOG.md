@@ -4,6 +4,14 @@ All notable changes to Helix Agent will be documented here.
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-04-16
+
+### Fixed
+- **`No module named 'argon2'` on Mac** — lowered `argon2-cffi` version pin from `>=23.1.0` to `>=21.3.0` for broader Mac wheel compatibility, same root cause as the v1.1.4 cryptography fix.
+
+### Docs
+- Combined `cryptography` and `argon2` into a single Mac troubleshooting entry in README
+
 ## [1.1.4] - 2026-04-16
 
 ### Fixed
