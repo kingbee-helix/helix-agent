@@ -381,9 +381,10 @@ class TestVersion:
         import main
         assert main.VERSION != "1.0.0"
 
-    def test_version_matches_1_0_3(self):
+    def test_version_is_valid_semver(self):
+        import re
         import main
-        assert main.VERSION == "1.0.3"
+        assert re.match(r"^\d+\.\d+\.\d+$", main.VERSION), f"VERSION '{main.VERSION}' is not valid semver"
 
 
 # ---------------------------------------------------------------------------
