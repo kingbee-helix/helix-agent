@@ -2,26 +2,17 @@
 
 All notable changes to Helix Agent will be documented here.
 
-## [Unreleased] - 2026-04-17 (Round 2)
-
-### Fixed (Round 2)
-- Version drift: FastAPI metadata now uses VERSION constant (was still hardcoded 1.0.0)
-- Snapshot route: corrected is_new_session=False (was incorrectly True)
-- Removed dead/unfinished logic in _sanitize_filename()
-
-### Added
-- Integration tests: snapshot route via TestClient, slash command adapter boundary, WebSocket auth success/failure
-
-## [Unreleased] - 2026-04-17
+## [1.2.1] - 2026-04-17
 
 ### Fixed
-- Version string now reads from single source of truth (`VERSION = "1.0.3"` constant in `main.py`; was hardcoded as `"Helix 1.0.0"` in the `version` CLI handler)
-- Fixed broken `call_claude()` invocation in snapshot route (`web/app.py`): replaced wrong kwargs `prompt=` and `session_id=` with correct `user_message=` and `is_new_session=True`; added a non-None `system=` string
-- Sanitized file upload filenames in `core/file_handler.py` using `Path.name` to strip path-separator-based traversal attacks; added collision handling that appends a short UUID suffix when the target file already exists
-- Context engine (`core/context_engine.py`) now only loads workspace bootstrap files on new sessions (`is_new_session=True`); resumed sessions return an empty system prompt so the prompt cache is not busted on every turn
+- **Version string** — VERSION now derived dynamically from git log at runtime; was hardcoded as `"Helix 1.0.0"` in the CLI handler and stale across all entry points
+- **FastAPI metadata version drift** — `web/app.py` FastAPI constructor now uses `VERSION` constant (was still hardcoded `1.0.0`)
+- **Broken `call_claude()` invocation in snapshot route** (`web/app.py`) — replaced wrong kwargs `prompt=` and `session_id=` with correct `user_message=` and `is_new_session=False`; snapshot reads existing session state, it does not create a new one
+- **File upload path sanitization** (`core/file_handler.py`) — filenames now stripped of path separators to prevent traversal attacks; collision handling added via UUID suffix; removed dead dotfile logic from `_sanitize_filename()`
+- **Context engine re-injection on every turn** (`core/context_engine.py`) — workspace files (HEARTBEAT.md, MEMORY.md, TOOLS.md etc.) now only loaded on new sessions; resumed sessions return empty system prompt so `--resume` carries context forward without busting the prompt cache
 
 ### Added
-- Initial test suite (`tests/test_helix.py`) covering: file upload sanitization, context engine new vs resumed session behaviour, version constant, snapshot route kwargs regression, session create/switch/compact flows, and slash command routing (`/status`, `/new`, `/model`, unknown command)
+- **Test suite** (`tests/test_helix.py`) — 34 tests covering file upload sanitization, context engine new vs resumed session behavior, version constant, snapshot route kwargs regression, session create/switch/compact flows, slash command routing, snapshot route integration via TestClient, slash command adapter boundary, and WebSocket auth success/failure
 
 ## [1.2.0] - 2026-04-16
 
