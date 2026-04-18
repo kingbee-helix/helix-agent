@@ -530,6 +530,18 @@ async def ws_chat(websocket: WebSocket):
         await websocket.close()
         return
 
+    # Replay the last 30 messages from the web/admin session transcript so the
+    # client can repopulate the chat history after a reconnect.
+    if _session_manager:
+        try:
+            session = await _session_manager.get_or_create("web", "admin")
+            history = _session_manager.read_transcript(session["session_id"])
+            if history:
+                tail = history[-30:]
+                await websocket.send_json({"type": "history", "messages": tail})
+        except Exception as e:
+            logger.error(f"WebSocket history replay error: {e}", exc_info=True)
+
     await websocket.send_json({"status": "connected", "agent": "helix"})
 
     try:

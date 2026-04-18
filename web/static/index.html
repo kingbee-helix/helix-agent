@@ -639,7 +639,7 @@
         <span x-text="lightMode ? 'Light mode' : 'Dark mode'"></span>
       </button>
 
-      <div class="text-xs text-slate-700 text-center font-mono pt-0.5">v1.3.0</div>
+      <div class="text-xs text-slate-700 text-center font-mono pt-0.5">v1.3.1</div>
     </div>
   </div>
 
@@ -1461,7 +1461,19 @@ function helixApp() {
         };
         this.ws.onmessage = (e) => {
           const data = JSON.parse(e.data);
-          if (data.status === 'connected') {
+          if (data.type === 'history') {
+            // Replay transcript history — only populate if chat is currently empty
+            // to avoid duplicating messages if the user has already sent something.
+            if (this.chatMessages.length === 0 && data.messages && data.messages.length > 0) {
+              data.messages.forEach(msg => {
+                this.chatMessages.push({ id: ++this.msgCounter, role: msg.role, content: msg.content });
+              });
+              this.$nextTick(() => {
+                const el = document.getElementById('chat-messages');
+                if (el) el.scrollTop = el.scrollHeight;
+              });
+            }
+          } else if (data.status === 'connected') {
             this.wsStatus = 'connected';
           } else if (data.chunk) {
             const last = this.chatMessages[this.chatMessages.length - 1];

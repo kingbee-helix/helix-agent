@@ -139,8 +139,11 @@ class DiscordAdapter(ChannelAdapter):
             self._debounce_tasks[debounce_key].cancel()
 
         async def _process():
-            await asyncio.sleep(DEBOUNCE_SECONDS)
-            await self._process_message(message, content, sender_id, sender_name, is_dm, attachment_info)
+            try:
+                await asyncio.sleep(DEBOUNCE_SECONDS)
+                await self._process_message(message, content, sender_id, sender_name, is_dm, attachment_info)
+            finally:
+                self._debounce_tasks.pop(debounce_key, None)
 
         task = asyncio.create_task(_process())
         self._debounce_tasks[debounce_key] = task
@@ -198,7 +201,12 @@ class DiscordAdapter(ChannelAdapter):
                 logger.warning(f"[INJECTION] Discord {sender_id}: {w}")
                 if self.audit_logger:
                     self.audit_logger.log_injection_detected("discord", sender_id, w, content[:200])
-            clean_content = "[SECURITY WARNING: Possible injection attempt detected]\n\n" + clean_content
+            try:
+                await message.remove_reaction(V_EMOJI, self._client.user)
+            except Exception:
+                pass
+            await message.channel.send("⚠️ Message blocked: potential prompt injection detected.")
+            return
 
         # ── File attachment handling ──
         file_path = None
@@ -306,8 +314,8 @@ class DiscordAdapter(ChannelAdapter):
                     except Exception:
                         pass
         except Exception as e:
-            logger.error(f"Agent loop error: {e}")
-            await send_reply(f"Something went wrong. {e}")
+            logger.error(f"Agent loop error: {e}", exc_info=True)
+            await send_reply("Something went wrong. Please try again.")
         finally:
             stop_typing.set()
             typing_task.cancel()

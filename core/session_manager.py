@@ -330,8 +330,8 @@ class SessionManager:
 
     # ── Transcript ──────────────────────────────────────────────────────────
 
-    def append_message(self, session_id: str, role: str, content) -> None:
-        """Append a message to the JSONL transcript (synchronous, safe from async)."""
+    def _append_message_sync(self, session_id: str, role: str, content) -> None:
+        """Synchronous implementation of append_message (runs in thread executor)."""
         path = _transcript_path(self.agent_id, session_id)
         entry = {
             "ts": _now_ts(),
@@ -341,8 +341,24 @@ class SessionManager:
         with open(path, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry) + "\n")
 
-    def read_transcript(self, session_id: str) -> list[dict]:
-        """Read the full transcript as a list of {role, content} dicts."""
+    def append_message(self, session_id: str, role: str, content) -> None:
+        """Append a message to the JSONL transcript.
+
+        Schedules the write in a thread-pool executor so the event loop is not
+        blocked by disk I/O.  Falls back to a direct synchronous write if no
+        running event loop is available (e.g. during tests).
+        """
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                loop.run_in_executor(None, self._append_message_sync, session_id, role, content)
+                return
+        except RuntimeError:
+            pass
+        self._append_message_sync(session_id, role, content)
+
+    def _read_transcript_sync(self, session_id: str) -> list[dict]:
+        """Synchronous implementation of read_transcript (runs in thread executor)."""
         path = _transcript_path(self.agent_id, session_id)
         if not path.exists():
             return []
@@ -355,6 +371,20 @@ class SessionManager:
                 entry = json.loads(line)
                 messages.append({"role": entry["role"], "content": entry["content"]})
         return messages
+
+    def read_transcript(self, session_id: str) -> list[dict]:
+        """Read the full transcript as a list of {role, content} dicts.
+
+        This method keeps a synchronous signature for compatibility with callers
+        that cannot await (e.g. snapshot route, context builder).  For the
+        /compact path the heavy read is offloaded via async_read_transcript.
+        """
+        return self._read_transcript_sync(session_id)
+
+    async def async_read_transcript(self, session_id: str) -> list[dict]:
+        """Non-blocking version of read_transcript for use in async coroutines."""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self._read_transcript_sync, session_id)
 
     def overwrite_transcript(self, session_id: str, messages: list[dict]) -> None:
         """Replace the transcript with a new set of messages (used after compaction)."""

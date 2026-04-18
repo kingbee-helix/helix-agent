@@ -2,6 +2,18 @@
 
 All notable changes to Helix Agent will be documented here.
 
+## [1.3.1] - 2026-04-18
+
+### Fixed
+- Prompt injection detection now blocks content from reaching the agent (was warning-only, content still passed through)
+- Error messages to Discord/Telegram sanitized — no more stack traces or file paths leaking to users
+- Memory leak: _locks in agent_loop.py now uses WeakValueDictionary to prevent unbounded growth
+- Memory leak: _debounce_tasks in discord_adapter.py cleaned up after task completion
+- Blocking file I/O in async paths (read_transcript, append_message) now runs in thread executor
+
+### Added
+- WebSocket chat replay: last 30 messages from transcript are replayed to client on reconnect
+
 ## [1.3.0] - 2026-04-17
 
 ### Added

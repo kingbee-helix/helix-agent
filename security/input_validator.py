@@ -49,10 +49,14 @@ def wrap_external_content(content: str, source: str) -> str:
 def sanitize_for_context(message: str) -> tuple[str, list[str]]:
     """
     Returns (sanitized_message, warnings).
-    The message is unchanged; warnings are injected as system notices.
+    If injection is detected, warnings is non-empty and the returned message
+    is an empty string — the caller must NOT pass the content to the agent.
     """
     warnings = []
     injection_warning = check_injection(message)
     if injection_warning:
         warnings.append(injection_warning)
+        # Return empty string so callers that forward the message to the agent
+        # receive nothing — the content must be blocked entirely.
+        return "", warnings
     return message, warnings

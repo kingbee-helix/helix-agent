@@ -9,6 +9,7 @@ NO_REPLY sentinel suppresses responses (heartbeat use).
 import asyncio
 import logging
 import traceback
+import weakref
 from typing import AsyncGenerator, Optional
 
 from core.config import get_config
@@ -24,7 +25,7 @@ NO_REPLY = "NO_REPLY"
 class AgentLoop:
     def __init__(self, session_manager: SessionManager):
         self.session_manager = session_manager
-        self._locks: dict[str, asyncio.Lock] = {}
+        self._locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
 
     def _get_lock(self, session_id: str) -> asyncio.Lock:
         if session_id not in self._locks:

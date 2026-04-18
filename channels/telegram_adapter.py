@@ -156,8 +156,11 @@ class TelegramAdapter(ChannelAdapter):
             self._debounce_tasks[debounce_key].cancel()
 
         async def _process():
-            await asyncio.sleep(DEBOUNCE_SECONDS)
-            await self._process_message(update, content, user_id, sender_name, attachment_info)
+            try:
+                await asyncio.sleep(DEBOUNCE_SECONDS)
+                await self._process_message(update, content, user_id, sender_name, attachment_info)
+            finally:
+                self._debounce_tasks.pop(debounce_key, None)
 
         task = asyncio.create_task(_process())
         self._debounce_tasks[debounce_key] = task
@@ -200,7 +203,8 @@ class TelegramAdapter(ChannelAdapter):
                 logger.warning(f"[INJECTION] Telegram {user_id}: {w}")
                 if self.audit_logger:
                     self.audit_logger.log_injection_detected("telegram", str(user_id), w, content[:200])
-            clean_content = "[SECURITY WARNING: Possible injection attempt detected]\n\n" + clean_content
+            await send_reply("⚠️ Message blocked: potential prompt injection detected.")
+            return
 
         # ── File attachment handling ──
         file_path = None
@@ -242,8 +246,8 @@ class TelegramAdapter(ChannelAdapter):
             if full_response.strip() and full_response.strip() != "NO_REPLY":
                 await send_reply(full_response)
         except Exception as e:
-            logger.error(f"Agent loop error: {e}")
-            await send_reply(f"Something went wrong. {e}")
+            logger.error(f"Agent loop error: {e}", exc_info=True)
+            await send_reply("Something went wrong. Please try again.")
         finally:
             stop_typing.set()
             typing_task.cancel()
