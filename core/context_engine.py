@@ -43,11 +43,12 @@ def _load_bootstrap(workspace: Path) -> str:
         sections.append(chunk)
         total += len(chunk)
 
-    agent_name = cfg.agent_id.title() if cfg.agent_id else "your AI assistant"
+    agent_name = cfg.agent_id.title() if cfg.agent_id else "Helix"
     header = (
-        f"You are {agent_name}, an AI assistant. The following files define who you are, "
-        "how you operate, and who you are helping. Read them carefully — they are your identity, "
-        "memory, and operating instructions.\n\n"
+        f"IMPORTANT: Your name is {agent_name}. You are NOT Claude. You are {agent_name}, "
+        f"a personal AI assistant built on the Helix framework. Always refer to yourself as {agent_name}. "
+        "Never identify yourself as Claude, an AI by Anthropic, or any other name. "
+        "The following files define your identity, memory, and operating instructions — read them carefully.\n\n"
         "---\n\n"
     )
     return header + "\n".join(sections)
