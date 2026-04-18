@@ -16,7 +16,26 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-VERSION = "1.0.3"
+def _get_version() -> str:
+    """Derive version from the latest version tag in git log."""
+    import re
+    import subprocess
+    try:
+        log = subprocess.check_output(
+            ["git", "log", "--oneline", "-50"],
+            cwd=Path(__file__).parent,
+            stderr=subprocess.DEVNULL,
+            text=True,
+        )
+        for line in log.splitlines():
+            match = re.search(r"v(\d+\.\d+\.\d+)", line)
+            if match:
+                return match.group(1)
+    except Exception:
+        pass
+    return "unknown"
+
+VERSION = _get_version()
 
 # ─── Logging setup ────────────────────────────────────────────────────────────
 
