@@ -43,7 +43,7 @@ def _load_bootstrap(workspace: Path) -> str:
         sections.append(chunk)
         total += len(chunk)
 
-    agent_name = cfg.agent_id.title() if cfg.agent_id else "Helix"
+    agent_name = cfg.agent_name or cfg.agent_id.title() or "Helix"
     header = (
         f"IMPORTANT: Your name is {agent_name}. You are NOT Claude. You are {agent_name}, "
         f"a personal AI assistant built on the Helix framework. Always refer to yourself as {agent_name}. "

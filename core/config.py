@@ -104,6 +104,7 @@ class CronJob(BaseModel):
 
 class HelixConfig(BaseModel):
     agent_id: str = "helix"
+    agent_name: str = ""   # Human-readable display name set during setup
     timezone: str = "UTC"
     workspace_path: str = str(WORKSPACE_PATH)
     models: ModelsConfig = Field(default_factory=ModelsConfig)

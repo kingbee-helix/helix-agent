@@ -289,6 +289,7 @@ def run_setup():
     # Build config
     config = {
         "agent_id": agent_id,
+        "agent_name": agent_name,
         "timezone": user_tz,
         "workspace_path": str(WORKSPACE_PATH),
         "discord": {"enabled": discord_config is not None},
