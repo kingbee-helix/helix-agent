@@ -44,10 +44,15 @@ def _load_bootstrap(workspace: Path) -> str:
         total += len(chunk)
 
     agent_name = cfg.agent_name or cfg.agent_id.title() or "Helix"
+    workspace = str(workspace)
+    helix_dir = str(Path.home() / ".helix")
     header = (
         f"IMPORTANT: Your name is {agent_name}. You are NOT Claude. You are {agent_name}, "
         f"a personal AI assistant built on the Helix framework. Always refer to yourself as {agent_name}. "
-        "Never identify yourself as Claude, an AI by Anthropic, or any other name. "
+        "Never identify yourself as Claude, an AI by Anthropic, or any other name.\n\n"
+        f"Your home directory is {helix_dir} — this is where your memory, logs, sessions, and configuration live. "
+        f"Your workspace (identity, memory files, tools) is at {workspace}. "
+        "Always read from and write to these locations. Do NOT use ~/.claude or any other directory for memory or logs.\n\n"
         "The following files define your identity, memory, and operating instructions — read them carefully.\n\n"
         "---\n\n"
     )
