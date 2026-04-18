@@ -406,7 +406,7 @@ class TestSnapshotRoute:
         }
         session_manager = MagicMock()
         session_manager.get_or_create = AsyncMock(return_value=session_stub)
-        session_manager.read_transcript = MagicMock(return_value=[
+        session_manager.async_read_transcript = AsyncMock(return_value=[
             {"role": "user", "content": "Hello"},
             {"role": "assistant", "content": "Hi there"},
         ])
@@ -554,6 +554,7 @@ class TestSlashCommands:
         sm.reset_session = AsyncMock()
         sm.set_model = AsyncMock()
         sm.read_transcript = MagicMock(return_value=[])
+        sm.async_read_transcript = AsyncMock(return_value=[])
         return sm
 
     def _make_agent_loop(self):
@@ -670,7 +671,7 @@ class TestSnapshotIntegration:
         }
         session_manager = MagicMock()
         session_manager.get_or_create = AsyncMock(return_value=session_stub)
-        session_manager.read_transcript = MagicMock(return_value=[
+        session_manager.async_read_transcript = AsyncMock(return_value=[
             {"role": "user", "content": "Hello"},
             {"role": "assistant", "content": "Hi there"},
         ])
@@ -724,7 +725,7 @@ class TestSnapshotIntegration:
         session_stub = {"session_id": str(uuid.uuid4()), "channel": "web", "peer": "admin"}
         session_manager = MagicMock()
         session_manager.get_or_create = AsyncMock(return_value=session_stub)
-        session_manager.read_transcript = MagicMock(return_value=[])  # empty
+        session_manager.async_read_transcript = AsyncMock(return_value=[])  # empty
         agent_loop = MagicMock()
 
         monkeypatch.setattr(app_mod, "_session_manager", session_manager)
@@ -771,6 +772,7 @@ class TestSlashCommandAdapterBoundary:
         sm.reset_session = AsyncMock()
         sm.set_model = AsyncMock()
         sm.read_transcript = MagicMock(return_value=[])
+        sm.async_read_transcript = AsyncMock(return_value=[])
         return sm
 
     def _make_loop(self):

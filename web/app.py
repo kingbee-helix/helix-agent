@@ -173,7 +173,7 @@ async def get_transcript(session_id: str):
     import re
     if not re.match(r'^[a-f0-9\-]{36}$', session_id):
         raise HTTPException(400, "Invalid session ID format")
-    messages = _session_manager.read_transcript(session_id)
+    messages = await _session_manager.async_read_transcript(session_id)
     return {"session_id": session_id, "messages": messages}
 
 
@@ -432,7 +432,7 @@ async def take_snapshot(channel: str, peer: str):
 
     session = await _session_manager.get_or_create(channel, peer)
     session_id = session["session_id"]
-    messages = _session_manager.read_transcript(session_id)
+    messages = await _session_manager.async_read_transcript(session_id)
 
     if not messages:
         return {"status": "empty", "message": "No conversation to snapshot."}
@@ -535,7 +535,7 @@ async def ws_chat(websocket: WebSocket):
     if _session_manager:
         try:
             session = await _session_manager.get_or_create("web", "admin")
-            history = _session_manager.read_transcript(session["session_id"])
+            history = await _session_manager.async_read_transcript(session["session_id"])
             if history:
                 tail = history[-30:]
                 await websocket.send_json({"type": "history", "messages": tail})

@@ -2,6 +2,12 @@
 
 All notable changes to Helix Agent will be documented here.
 
+## [1.3.2] - 2026-04-18
+
+### Fixed
+- async_read_transcript now actually used at all async call sites (was added but callers still used sync version)
+- append_message now properly awaited instead of fire-and-forget (prevents silent failures and ordering issues)
+
 ## [1.3.1] - 2026-04-18
 
 ### Fixed

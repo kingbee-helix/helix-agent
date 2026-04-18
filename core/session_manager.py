@@ -341,21 +341,14 @@ class SessionManager:
         with open(path, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry) + "\n")
 
-    def append_message(self, session_id: str, role: str, content) -> None:
+    async def append_message(self, session_id: str, role: str, content) -> None:
         """Append a message to the JSONL transcript.
 
-        Schedules the write in a thread-pool executor so the event loop is not
-        blocked by disk I/O.  Falls back to a direct synchronous write if no
-        running event loop is available (e.g. during tests).
+        Awaits the executor write so callers get ordering guarantees and
+        exceptions propagate correctly instead of being silently swallowed.
         """
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                loop.run_in_executor(None, self._append_message_sync, session_id, role, content)
-                return
-        except RuntimeError:
-            pass
-        self._append_message_sync(session_id, role, content)
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._append_message_sync, session_id, role, content)
 
     def _read_transcript_sync(self, session_id: str) -> list[dict]:
         """Synchronous implementation of read_transcript (runs in thread executor)."""

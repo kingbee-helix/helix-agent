@@ -78,8 +78,8 @@ class AgentLoop:
                     return
 
                 # Audit log
-                self.session_manager.append_message(session_id, "user", user_message)
-                self.session_manager.append_message(session_id, "assistant", response_text)
+                await self.session_manager.append_message(session_id, "user", user_message)
+                await self.session_manager.append_message(session_id, "assistant", response_text)
                 await self.session_manager.update_activity(session_id, usage)
 
                 yield response_text

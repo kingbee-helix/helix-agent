@@ -92,7 +92,7 @@ async def handle_slash(
     if cmd == "/compact":
         session = await session_manager.get_or_create(channel, peer)
         sid = session["session_id"]
-        messages = session_manager.read_transcript(sid)
+        messages = await session_manager.async_read_transcript(sid)
 
         if len(messages) < 4:
             await send_fn("Nothing to compact — session is too short.")
