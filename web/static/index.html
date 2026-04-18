@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Helix Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
@@ -11,213 +14,805 @@
     darkMode: 'class',
     theme: {
       extend: {
-        colors: {
-          helix: { DEFAULT: '#7c3aed', light: '#a78bfa', dark: '#4c1d95' }
-        }
+        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
       }
     }
   }
 </script>
 <style>
+  /* ================================================================
+     BASE RESETS
+  ================================================================ */
+  * { transition-property: color, background-color, border-color, box-shadow, opacity, transform; transition-duration: 0.15s; transition-timing-function: ease; }
   [x-cloak] { display: none !important; }
-  .msg-user { background: #1e1b4b; }
-  .msg-assistant { background: #0f172a; }
-  pre { white-space: pre-wrap; word-break: break-word; }
-  .scroll-auto { scroll-behavior: auto; }
+  pre { white-space: pre-wrap; word-break: break-word; font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace; }
+
+  body { font-family: 'Inter', system-ui, sans-serif; }
+
+  /* ================================================================
+     THEME VARIABLES  (applied via data-theme attribute on <html>)
+     Each theme sets CSS custom properties consumed by the classes below.
+  ================================================================ */
+
+  /* --- Classic (default, purple) --- */
+  [data-theme="classic"] {
+    --bg:            #080c14;
+    --sidebar-bg:    #0d0d14;
+    --card-bg:       #0f0f1a;
+    --card-bg-light: #ffffff;
+    --accent:        #7c3aed;
+    --accent-light:  #a78bfa;
+    --accent-dark:   #4c1d95;
+    --accent-glow:   rgba(124,58,237,0.4);
+    --accent-glow2:  rgba(167,139,250,0.2);
+    --accent-r:      124; --accent-g: 58; --accent-b: 237;
+    --dot-color:     #4ade80;
+    --dot-glow:      rgba(74,222,128,0.5);
+    --dot-glow2:     rgba(74,222,128,0);
+    --live-color:    #4ade80;
+    --live-bg:       rgba(74,222,128,0.1);
+    --live-border:   rgba(74,222,128,0.25);
+    --bubble-user:   #5b21b6;
+    --bubble-asst:   #131320;
+    --bubble-asst-border: rgba(255,255,255,0.06);
+    --typing-dot:    #a78bfa;
+    --login-bg:      rgba(13,13,20,0.75);
+    --login-shadow:  rgba(124,58,237,0.15);
+    --logo-title:    #c4b5fd;
+    --name:          Classic;
+    --light-bg:      #f5f3ff;
+    --scrollbar:     rgba(124,58,237,0.3);
+    --scrollbar-hov: rgba(124,58,237,0.5);
+  }
+
+  /* --- Volcano (amber) --- */
+  [data-theme="volcano"] {
+    --bg:            #0c0a08;
+    --sidebar-bg:    #111008;
+    --card-bg:       rgba(26,22,8,0.5);
+    --card-bg-light: #ffffff;
+    --accent:        #f59e0b;
+    --accent-light:  #fbbf24;
+    --accent-dark:   #b45309;
+    --accent-glow:   rgba(245,158,11,0.45);
+    --accent-glow2:  rgba(251,191,36,0.2);
+    --accent-r:      245; --accent-g: 158; --accent-b: 11;
+    --dot-color:     #4ade80;
+    --dot-glow:      rgba(74,222,128,0.5);
+    --dot-glow2:     rgba(74,222,128,0);
+    --live-color:    #f59e0b;
+    --live-bg:       rgba(245,158,11,0.12);
+    --live-border:   rgba(245,158,11,0.3);
+    --bubble-user:   #92450a;
+    --bubble-asst:   rgba(26,22,8,0.5);
+    --bubble-asst-border: rgba(245,158,11,0.08);
+    --typing-dot:    #fbbf24;
+    --login-bg:      rgba(26,22,8,0.78);
+    --login-shadow:  rgba(245,158,11,0.12);
+    --logo-title:    #fbbf24;
+    --name:          Volcano;
+    --light-bg:      #fefce8;
+    --scrollbar:     rgba(245,158,11,0.3);
+    --scrollbar-hov: rgba(245,158,11,0.55);
+  }
+
+  /* Volcano light mode overrides for bubble-user */
+  [data-theme="volcano"].light .bubble-user { background: #d97706 !important; }
+
+  /* --- Ocean (cyan) --- */
+  [data-theme="ocean"] {
+    --bg:            #080c14;
+    --sidebar-bg:    #0d1220;
+    --card-bg:       #0f1623;
+    --card-bg-light: #ffffff;
+    --accent:        #0891b2;
+    --accent-light:  #67e8f9;
+    --accent-dark:   #0e7490;
+    --accent-glow:   rgba(6,182,212,0.45);
+    --accent-glow2:  rgba(6,214,160,0.25);
+    --accent-r:      6; --accent-g: 182; --accent-b: 212;
+    --dot-color:     #06d6a0;
+    --dot-glow:      rgba(6,214,160,0.55);
+    --dot-glow2:     rgba(6,214,160,0);
+    --live-color:    #06d6a0;
+    --live-bg:       rgba(6,214,160,0.1);
+    --live-border:   rgba(6,214,160,0.3);
+    --bubble-user:   #0891b2;
+    --bubble-asst:   #111827;
+    --bubble-asst-border: rgba(255,255,255,0.06);
+    --typing-dot:    #67e8f9;
+    --login-bg:      rgba(13,18,32,0.8);
+    --login-shadow:  rgba(6,182,212,0.15);
+    --logo-title:    #67e8f9;
+    --name:          Ocean;
+    --light-bg:      #f0f9ff;
+    --scrollbar:     rgba(6,182,212,0.3);
+    --scrollbar-hov: rgba(6,182,212,0.5);
+  }
+
+  /* --- Forest (green) --- */
+  [data-theme="forest"] {
+    --bg:            #1a1208;
+    --sidebar-bg:    #1a1208;
+    --card-bg:       #2a2520;
+    --card-bg-light: #ffffff;
+    --accent:        #4a9424;
+    --accent-light:  #b8e8a0;
+    --accent-dark:   #3a7a1e;
+    --accent-glow:   rgba(74,148,36,0.4);
+    --accent-glow2:  rgba(58,122,30,0.2);
+    --accent-r:      74; --accent-g: 148; --accent-b: 36;
+    --dot-color:     #4a9424;
+    --dot-glow:      rgba(163,230,53,0.5);
+    --dot-glow2:     rgba(163,230,53,0);
+    --live-color:    #4a9424;
+    --live-bg:       rgba(74,148,36,0.1);
+    --live-border:   rgba(74,148,36,0.25);
+    --bubble-user:   #2d5016;
+    --bubble-asst:   #141a1f;
+    --bubble-asst-border: rgba(255,255,255,0.06);
+    --typing-dot:    #4a9424;
+    --login-bg:      rgba(13,17,9,0.78);
+    --login-shadow:  rgba(74,148,36,0.12);
+    --logo-title:    #b8e8a0;
+    --name:          Forest;
+    --light-bg:      #f0fdf4;
+    --scrollbar:     rgba(74,148,36,0.3);
+    --scrollbar-hov: rgba(74,148,36,0.5);
+  }
+
+  /* Forest light bubble-user override */
+  [data-theme="forest"].light .bubble-user { background: #5aaa2a !important; color: white !important; }
+
+  /* ================================================================
+     STRUCTURAL CLASSES (use CSS vars)
+  ================================================================ */
+
+  body, .bg-main { background-color: var(--bg); }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--sidebar-bg);
+    border-right: 1px solid rgba(255,255,255,0.04);
+    box-shadow: 4px 0 32px -8px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.12);
+    position: relative;
+  }
+  .sidebar::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--accent-glow) 30%, var(--accent-glow2) 70%, transparent);
+  }
+
+  /* Nav items */
+  .nav-active {
+    background: linear-gradient(90deg, rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.22) 0%, transparent 100%);
+    border-left: 3px solid var(--accent);
+    color: var(--accent-light);
+  }
+  .nav-item {
+    border-left: 3px solid transparent;
+    padding-left: calc(0.75rem - 3px);
+  }
+  .nav-item:hover:not(.nav-active) {
+    background: rgba(255,255,255,0.04);
+    color: #e2e8f0;
+    border-left-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.3);
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.1);
+    border-radius: 0.875rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.35) 50%, transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .card:hover::before { opacity: 1; }
+  .card:hover {
+    border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.2);
+    box-shadow: inset 0 0 0 1px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.1), 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  /* Stat cards */
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.7) 50%, transparent);
+    border-radius: 0 0 2px 2px;
+  }
+
+  /* Status dot */
+  @keyframes dot-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 var(--dot-glow); }
+    50% { box-shadow: 0 0 0 5px var(--dot-glow2); }
+  }
+  .dot-green {
+    width: 7px; height: 7px;
+    background: var(--dot-color);
+    border-radius: 50%;
+    display: inline-block;
+    animation: dot-pulse 2s ease infinite;
+    flex-shrink: 0;
+  }
+
+  /* LIVE badge */
+  @keyframes pulse-live {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .live-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+    color: var(--live-color);
+    background: var(--live-bg);
+    border: 1px solid var(--live-border);
+    border-radius: 3px;
+    padding: 1px 4px;
+    animation: pulse-live 2s ease infinite;
+  }
+
+  /* Logo glow */
+  .logo-glow { filter: drop-shadow(0 0 12px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.6)); }
+
+  /* Chat bubbles — solid, no gradients */
+  .bubble-user {
+    background: var(--bubble-user);
+    border-radius: 18px 18px 4px 18px;
+    box-shadow: 0 2px 10px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.2);
+  }
+  .bubble-assistant {
+    background: var(--bubble-asst);
+    border: 1px solid var(--bubble-asst-border);
+    border-radius: 18px 18px 18px 4px;
+  }
+
+  /* Typing dots */
+  @keyframes dot-bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-6px); opacity: 1; }
+  }
+  .typing-dot { width: 7px; height: 7px; background: var(--typing-dot); border-radius: 50%; display: inline-block; }
+  .typing-dot:nth-child(1) { animation: dot-bounce 1.2s 0.0s infinite; }
+  .typing-dot:nth-child(2) { animation: dot-bounce 1.2s 0.2s infinite; }
+  .typing-dot:nth-child(3) { animation: dot-bounce 1.2s 0.4s infinite; }
+
+  /* Agent avatar */
+  .agent-avatar {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.3);
+  }
+
+  /* Chat input */
+  .chat-input:focus {
+    outline: none;
+    border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.6);
+    box-shadow: 0 0 0 3px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.15);
+  }
+
+  /* Login */
+  .login-glow {
+    position: absolute; width: 550px; height: 550px;
+    background: radial-gradient(circle, rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.18) 0%, transparent 70%);
+    border-radius: 50%; left: 50%; top: 50%; transform: translate(-50%, -60%);
+    pointer-events: none; z-index: 0;
+  }
+  .login-card {
+    background: var(--login-bg);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 1.25rem;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px var(--login-shadow);
+  }
+
+  /* DNA logo pulse */
+  @keyframes dna-pulse {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.5)); }
+    50% { filter: drop-shadow(0 0 24px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.85)); }
+  }
+  .dna-pulse { animation: dna-pulse 3s ease infinite; }
+
+  /* Input base */
+  .input-base {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.5rem; color: #e2e8f0;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .input-base:focus {
+    outline: none;
+    border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.5);
+    box-shadow: 0 0 0 3px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.12);
+  }
+  .input-base::placeholder { color: #64748b; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hov); }
+
+  /* Chip */
+  .chip {
+    background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.15);
+    border: 1px solid rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.28);
+    color: var(--accent-light);
+    border-radius: 0.375rem; padding: 1px 7px;
+    font-size: 11px; font-weight: 500;
+  }
+
+  /* Button primary */
+  .btn-primary {
+    background: var(--accent);
+    color: white; font-weight: 600; border-radius: 0.5rem;
+    box-shadow: 0 4px 14px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.35);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 6px 20px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.45);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* Section title */
+  .section-title {
+    font-size: 1.2rem; font-weight: 700;
+    background: linear-gradient(90deg, #e2e8f0 60%, var(--accent-light));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  /* Badges */
+  .badge-active {
+    background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.2); color: #4ade80;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+    border-radius: 4px; padding: 1px 6px; text-transform: uppercase;
+  }
+  .badge-paused {
+    background: rgba(148,163,184,0.08); border: 1px solid rgba(148,163,184,0.15); color: #64748b;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+    border-radius: 4px; padding: 1px 6px; text-transform: uppercase;
+  }
+
+  /* Log */
+  .log-line:hover { background: rgba(255,255,255,0.02); border-radius: 4px; }
+
+  /* Separator */
+  .grad-sep {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.2) 50%, transparent);
+  }
+
+  /* Tabs */
+  .tab-active {
+    background: var(--accent); color: white;
+    box-shadow: 0 2px 10px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.3);
+  }
+  .tab-inactive { background: rgba(255,255,255,0.04); color: #64748b; border: 1px solid rgba(255,255,255,0.06); }
+  .tab-inactive:hover { background: rgba(255,255,255,0.07); color: #94a3b8; }
+
+  /* Model tier pills */
+  .tier-fast     { background: rgba(34,197,94,0.1);  color: #4ade80; border: 1px solid rgba(34,197,94,0.2);  border-radius: 4px; font-size: 11px; padding: 1px 7px; }
+  .tier-balanced { background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); border-radius: 4px; font-size: 11px; padding: 1px 7px; }
+  .tier-powerful { background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.1); color: var(--accent-light); border: 1px solid rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.2); border-radius: 4px; font-size: 11px; padding: 1px 7px; }
+
+  /* Cron code */
+  .cron-code { color: var(--accent-light); background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.1); padding: 1px 6px; border-radius: 4px; }
+
+  /* Theme selector button */
+  .theme-btn {
+    width: 100%; padding: 6px 10px;
+    background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.08);
+    border: 1px solid rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.2);
+    border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12px; color: #94a3b8;
+    transition: all 0.15s;
+  }
+  .theme-btn:hover {
+    background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.14);
+    border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.35);
+    color: #e2e8f0;
+  }
+  .theme-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  /* Theme picker dropdown */
+  .theme-picker {
+    position: absolute; bottom: calc(100% + 6px); left: 0; right: 0;
+    background: var(--sidebar-bg);
+    border: 1px solid rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.25);
+    border-radius: 8px; padding: 4px; z-index: 50;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .theme-option {
+    width: 100%; padding: 6px 10px;
+    display: flex; align-items: center; gap: 8px;
+    border-radius: 6px; cursor: pointer;
+    font-size: 12px; color: #94a3b8;
+    border: none; background: transparent; text-align: left;
+  }
+  .theme-option:hover { background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.12); color: #e2e8f0; }
+  .theme-option.active { color: var(--accent-light); background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.18); }
+
+  /* Dark mode toggle button */
+  .mode-btn {
+    width: 100%; padding: 6px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 12px; color: #64748b;
+    transition: all 0.15s;
+  }
+  .mode-btn:hover { background: rgba(255,255,255,0.07); color: #94a3b8; }
+
+  /* ================================================================
+     LIGHT MODE OVERRIDES
+  ================================================================ */
+  html.light body, html.light .bg-main { background-color: var(--light-bg) !important; }
+  html.light .sidebar {
+    background: #fff !important;
+    border-right: 1px solid rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.15) !important;
+  }
+  html.light .card { background: var(--card-bg-light) !important; border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.15) !important; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  html.light .card:hover { border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.3) !important; }
+  html.light .input-base { background: #f8fafc; border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.2); color: #0f172a; }
+  html.light .input-base::placeholder { color: #94a3b8; }
+  html.light .input-base:focus { border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.5); }
+  html.light .login-card { background: rgba(255,255,255,0.9) !important; border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.2) !important; }
+  html.light .nav-active { color: var(--accent-dark) !important; }
+  html.light .nav-item:hover:not(.nav-active) { background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.06); color: #1e293b; }
+  html.light .bubble-assistant { background: var(--light-bg) !important; border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.2) !important; }
+  html.light .section-title { background: linear-gradient(90deg, #1e293b 60%, var(--accent-dark)); -webkit-background-clip: text; background-clip: text; }
+  html.light .tab-inactive { background: #f1f5f9; border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.15); }
+  html.light .tab-inactive:hover { background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.08); color: var(--accent-dark); }
+  html.light .chip { color: var(--accent-dark) !important; }
+  html.light .grad-sep { background: linear-gradient(90deg, transparent, rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.3) 50%, transparent); }
+  html.light .theme-btn { color: #475569; }
+  html.light .theme-btn:hover { color: #1e293b; }
+  html.light .mode-btn { color: #475569; }
+  html.light .mode-btn:hover { color: #1e293b; }
+  html.light .theme-picker { background: #fff; }
+  html.light .theme-option { color: #475569; }
+  html.light .theme-option:hover { color: #1e293b; }
+  html.light .text-slate-200 { color: #1e293b !important; }
+  html.light .text-slate-300 { color: #334155 !important; }
+  html.light .text-slate-400 { color: #475569 !important; }
+  html.light .text-slate-500 { color: #64748b !important; }
+  html.light .text-slate-600 { color: #94a3b8 !important; }
+  html.light .text-slate-700 { color: #94a3b8 !important; }
+  html.light .text-gray-100 { color: #0f172a !important; }
+  html.light .bg-black\/30 { background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.04) !important; }
+  html.light [class*="bg-white/[0.02]"] { background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.04) !important; }
+  html.light [class*="bg-white/[0.03]"] { background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.06) !important; }
+  html.light [class*="bg-white/[0.04]"] { background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.07) !important; }
+  html.light .log-line:hover { background: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.04); }
 </style>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen" x-data="helixApp()" x-init="init()" x-cloak>
+<body class="bg-main text-gray-100 min-h-screen" x-data="helixApp()" x-init="init()" x-cloak>
 
-<!-- Login screen -->
-<div x-show="!authenticated" class="min-h-screen flex items-center justify-center">
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-8 w-full max-w-sm shadow-2xl">
-    <div class="text-center mb-6">
-      <div class="flex justify-center mb-2">
-        <svg width="40" height="56" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Back strand segments (faded, drawn first) -->
-          <path d="M 8,0 C 8,5 32,9 32,14" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
-          <path d="M 8,14 C 8,19 32,23 32,28" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
-          <path d="M 8,28 C 8,33 32,37 32,42" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
-          <path d="M 8,42 C 8,47 32,51 32,56" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
-          <!-- Base pair rungs -->
-          <line x1="8" y1="0" x2="32" y2="0" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
-          <line x1="8" y1="14" x2="32" y2="14" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
-          <line x1="8" y1="28" x2="32" y2="28" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
-          <line x1="8" y1="42" x2="32" y2="42" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
-          <line x1="8" y1="56" x2="32" y2="56" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
-          <!-- Front strand segments (solid, drawn on top) -->
-          <path d="M 32,0 C 32,5 8,9 8,14" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M 32,14 C 32,19 8,23 8,28" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M 32,28 C 32,33 8,37 8,42" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M 32,42 C 32,47 8,51 8,56" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
+<!-- ============================================================ LOGIN ============================================================ -->
+<div x-show="!authenticated" class="min-h-screen flex items-center justify-center relative overflow-hidden">
+  <div class="login-glow"></div>
+  <div class="login-card p-10 w-full max-w-sm relative z-10">
+    <div class="text-center mb-8">
+      <div class="flex justify-center mb-4">
+        <div class="relative">
+          <div class="absolute inset-0 rounded-full" style="background: radial-gradient(circle, rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.3) 0%, transparent 70%); transform: scale(2.5);"></div>
+          <svg class="dna-pulse relative z-10" width="48" height="68" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 8,0 C 8,5 32,9 32,14" stroke="var(--accent-light)" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 8,14 C 8,19 32,23 32,28" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 8,28 C 8,33 32,37 32,42" stroke="var(--accent-light)" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 8,42 C 8,47 32,51 32,56" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+            <line x1="8" y1="0" x2="32" y2="0" stroke="var(--accent)" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="14" x2="32" y2="14" stroke="var(--accent)" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="28" x2="32" y2="28" stroke="var(--accent)" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="42" x2="32" y2="42" stroke="var(--accent)" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="56" x2="32" y2="56" stroke="var(--accent)" stroke-width="1.5" opacity="0.6"/>
+            <path d="M 32,0 C 32,5 8,9 8,14" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M 32,14 C 32,19 8,23 8,28" stroke="var(--accent-light)" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M 32,28 C 32,33 8,37 8,42" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M 32,42 C 32,47 8,51 8,56" stroke="var(--accent-light)" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
       </div>
-      <h1 class="text-2xl font-bold text-helix">Helix</h1>
-      <p class="text-gray-400 text-sm">AI Agent Harness</p>
+      <h1 class="text-3xl font-bold" style="color: var(--accent-light);">Helix</h1>
+      <p class="text-slate-500 text-sm mt-1 font-medium tracking-wide">AI Agent Harness</p>
     </div>
+    <div class="grad-sep mb-6"></div>
     <input
       type="password"
       x-model="loginPassword"
       @keyup.enter="login()"
       placeholder="Admin password"
-      class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:border-helix"
+      class="input-base w-full px-4 py-3 mb-4 text-sm"
     >
-    <button @click="login()" class="w-full bg-helix hover:bg-helix-dark text-white font-semibold py-2 rounded-lg transition">
-      Login
-    </button>
-    <p x-show="loginError" class="text-red-400 text-sm mt-2 text-center" x-text="loginError"></p>
+    <button @click="login()" class="btn-primary w-full py-3 text-sm">Sign in</button>
+    <p x-show="loginError" class="text-red-400 text-xs mt-3 text-center" x-text="loginError"></p>
   </div>
 </div>
 
-<!-- Main app -->
+<!-- ============================================================ MAIN APP ============================================================ -->
 <div x-show="authenticated" class="flex h-screen overflow-hidden">
 
-  <!-- Sidebar -->
-  <div class="w-48 bg-gray-900 border-r border-gray-800 flex flex-col flex-shrink-0">
-    <div class="p-4 border-b border-gray-800">
-      <div class="flex items-center gap-2">
-        <svg width="20" height="28" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M 8,0 C 8,5 32,9 32,14" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
-          <path d="M 8,14 C 8,19 32,23 32,28" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
-          <path d="M 8,28 C 8,33 32,37 32,42" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
-          <path d="M 8,42 C 8,47 32,51 32,56" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
-          <line x1="8" y1="0" x2="32" y2="0" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
-          <line x1="8" y1="14" x2="32" y2="14" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
-          <line x1="8" y1="28" x2="32" y2="28" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
-          <line x1="8" y1="42" x2="32" y2="42" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
-          <line x1="8" y1="56" x2="32" y2="56" stroke="#9333ea" stroke-width="1.5" opacity="0.55"/>
-          <path d="M 32,0 C 32,5 8,9 8,14" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M 32,14 C 32,19 8,23 8,28" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M 32,28 C 32,33 8,37 8,42" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="M 32,42 C 32,47 8,51 8,56" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
+  <!-- ===== SIDEBAR ===== -->
+  <div class="sidebar w-52 flex flex-col flex-shrink-0">
+    <!-- Logo area -->
+    <div class="p-4 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <div class="absolute inset-0 rounded-full" style="background: radial-gradient(circle, rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.4) 0%, transparent 80%); transform: scale(2.2); z-index:0;"></div>
+          <svg class="logo-glow relative z-10" width="22" height="30" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 8,0 C 8,5 32,9 32,14" stroke="var(--accent-light)" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 8,14 C 8,19 32,23 32,28" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 8,28 C 8,33 32,37 32,42" stroke="var(--accent-light)" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+            <path d="M 8,42 C 8,47 32,51 32,56" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+            <line x1="8" y1="0" x2="32" y2="0" stroke="var(--accent)" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="14" x2="32" y2="14" stroke="var(--accent)" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="28" x2="32" y2="28" stroke="var(--accent)" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="42" x2="32" y2="42" stroke="var(--accent)" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="56" x2="32" y2="56" stroke="var(--accent)" stroke-width="1.5" opacity="0.6"/>
+            <path d="M 32,0 C 32,5 8,9 8,14" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M 32,14 C 32,19 8,23 8,28" stroke="var(--accent-light)" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M 32,28 C 32,33 8,37 8,42" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M 32,42 C 32,47 8,51 8,56" stroke="var(--accent-light)" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
         <div>
-          <div class="font-bold text-helix-light">Helix</div>
-          <div class="text-xs text-gray-500" x-text="health.status || 'checking...'"></div>
+          <div class="font-bold text-sm" style="color: var(--logo-title); letter-spacing: -0.02em;">Helix</div>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="dot-green"></span>
+            <span class="text-xs font-medium text-emerald-400" x-text="health.status || 'checking'"></span>
+            <span class="live-badge ml-1">LIVE</span>
+          </div>
         </div>
       </div>
     </div>
-    <nav class="flex-1 p-2 space-y-1">
+
+    <!-- Navigation -->
+    <nav class="flex-1 p-2 space-y-0.5 mt-1">
       <template x-for="page in pages" :key="page.id">
         <button
           @click="currentPage = page.id; onPageChange(page.id)"
-          :class="currentPage === page.id ? 'bg-helix text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'"
-          class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition"
-          x-text="page.label"
-        ></button>
+          :class="currentPage === page.id ? 'nav-active' : 'text-slate-500'"
+          class="nav-item w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg flex items-center gap-2.5"
+        >
+          <span class="text-base leading-none" x-text="page.icon"></span>
+          <span x-text="page.label"></span>
+        </button>
       </template>
     </nav>
-    <div class="p-3 border-t border-gray-800 text-xs text-gray-600">
-      <div>Sessions: <span class="text-gray-400" x-text="health.sessions || 0"></span></div>
-      <div>Uptime: <span class="text-gray-400" x-text="formatUptime(health.uptime || 0)"></span></div>
-    </div>
-  </div>
 
-  <!-- Content -->
-  <div class="flex-1 flex flex-col overflow-hidden">
-
-    <!-- Home / Status page -->
-    <div x-show="currentPage === 'home'" class="flex-1 overflow-y-auto p-6">
-      <h2 class="text-xl font-bold mb-6">System Status</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
-          <div class="text-xs text-gray-500 mb-1">Status</div>
-          <div class="text-lg font-bold" :class="health.status === 'ok' ? 'text-green-400' : 'text-red-400'" x-text="health.status || '...'"></div>
-        </div>
-        <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
-          <div class="text-xs text-gray-500 mb-1">Sessions</div>
-          <div class="text-lg font-bold text-helix-light" x-text="health.sessions || 0"></div>
-        </div>
-        <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
-          <div class="text-xs text-gray-500 mb-1">Uptime</div>
-          <div class="text-lg font-bold text-gray-200" x-text="formatUptime(health.uptime || 0)"></div>
-        </div>
-        <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
-          <div class="text-xs text-gray-500 mb-1">Channels</div>
-          <div class="text-sm font-bold text-gray-200" x-text="(health.channels || []).join(', ') || 'none'"></div>
-        </div>
+    <!-- Bottom meta -->
+    <div class="p-3 space-y-1.5" style="border-top: 1px solid rgba(255,255,255,0.04);">
+      <div class="flex justify-between text-xs">
+        <span class="text-slate-600">Sessions</span>
+        <span class="text-slate-400 font-medium" x-text="health.sessions || 0"></span>
       </div>
+      <div class="flex justify-between text-xs">
+        <span class="text-slate-600">Uptime</span>
+        <span class="text-slate-400 font-medium" x-text="formatUptime(health.uptime || 0)"></span>
+      </div>
+      <div class="grad-sep mt-1"></div>
 
-      <!-- Models roster -->
-      <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 mb-4">
-        <h3 class="font-semibold mb-3 text-gray-300">Model Roster</h3>
-        <div class="space-y-2">
-          <template x-for="m in (config.models?.roster || [])" :key="m.alias">
-            <div class="flex items-center gap-3 text-sm">
-              <span class="bg-helix/20 text-helix-light px-2 py-0.5 rounded text-xs font-mono" x-text="m.alias"></span>
-              <span class="text-gray-400" x-text="m.tier"></span>
-              <span class="text-gray-500" x-text="m.description"></span>
-            </div>
+      <!-- Theme selector -->
+      <div class="relative" x-data="{ open: false }">
+        <button @click="open = !open" class="theme-btn">
+          <span class="theme-dot" :style="'background:' + currentThemeColor()"></span>
+          <span x-text="currentThemeName()"></span>
+          <span class="ml-auto text-xs opacity-50">▾</span>
+        </button>
+        <div x-show="open" @click.outside="open = false" class="theme-picker">
+          <template x-for="t in themes" :key="t.id">
+            <button
+              @click="setTheme(t.id); open = false"
+              :class="theme === t.id ? 'active' : ''"
+              class="theme-option"
+            >
+              <span class="theme-dot" :style="'background:' + t.color"></span>
+              <span x-text="t.name"></span>
+            </button>
           </template>
         </div>
       </div>
+
+      <!-- Dark/light toggle -->
+      <button @click="toggleMode()" class="mode-btn">
+        <span x-text="lightMode ? '☀️' : '🌙'"></span>
+        <span x-text="lightMode ? 'Light mode' : 'Dark mode'"></span>
+      </button>
+
+      <div class="text-xs text-slate-700 text-center font-mono pt-0.5">v1.3.0</div>
+    </div>
+  </div>
+
+  <!-- ===== CONTENT AREA ===== -->
+  <div class="flex-1 flex flex-col overflow-hidden bg-main">
+
+    <!-- ================================ HOME ================================ -->
+    <div x-show="currentPage === 'home'" class="flex-1 overflow-y-auto p-7">
+      <div class="flex items-center justify-between mb-7">
+        <div>
+          <h2 class="section-title">System Status</h2>
+          <p class="text-slate-600 text-sm mt-0.5">Live overview of your Helix instance</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-slate-600 bg-white/[0.03] border border-white/5 rounded-lg px-3 py-2">
+          <span class="dot-green"></span>
+          <span x-text="health.status === 'ok' ? 'All systems operational' : (health.status || 'Checking...')"></span>
+        </div>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-7">
+        <div class="card stat-card p-5">
+          <div class="text-xs text-slate-600 mb-2 font-medium uppercase tracking-wider">Status</div>
+          <div class="flex items-center gap-2">
+            <span class="dot-green"></span>
+            <span class="text-xl font-bold" :class="health.status === 'ok' ? 'text-emerald-400' : 'text-red-400'" x-text="health.status || '...'"></span>
+          </div>
+          <div class="text-xs text-slate-700 mt-2">All services healthy</div>
+        </div>
+        <div class="card stat-card p-5">
+          <div class="text-xs text-slate-600 mb-2 font-medium uppercase tracking-wider">Sessions</div>
+          <div class="text-3xl font-bold" style="color: var(--accent-light);" x-text="health.sessions || 0"></div>
+          <div class="text-xs text-slate-700 mt-2">active sessions</div>
+        </div>
+        <div class="card stat-card p-5">
+          <div class="text-xs text-slate-600 mb-2 font-medium uppercase tracking-wider">Uptime</div>
+          <div class="text-2xl font-bold text-slate-200" x-text="formatUptime(health.uptime || 0)"></div>
+        </div>
+        <div class="card stat-card p-5">
+          <div class="text-xs text-slate-600 mb-2 font-medium uppercase tracking-wider">Channels</div>
+          <div class="flex flex-wrap gap-1 mt-1">
+            <template x-for="ch in (health.channels || [])" :key="ch">
+              <span class="chip" x-text="ch"></span>
+            </template>
+            <span x-show="!(health.channels || []).length" class="text-slate-600 text-sm">none</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Model roster -->
+      <div class="card p-5 mb-5">
+        <h3 class="font-semibold text-slate-300 mb-4 flex items-center gap-2">
+          <svg class="w-4 h-4" style="color: var(--accent-light);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          Model Roster
+        </h3>
+        <div class="space-y-3">
+          <template x-for="m in (config.models?.roster || [])" :key="m.alias">
+            <div class="flex items-center gap-4 py-2.5 px-3 rounded-lg hover:bg-white/[0.02] group">
+              <span class="chip font-mono text-xs" x-text="m.alias"></span>
+              <span :class="'tier-' + m.tier" x-text="m.tier"></span>
+              <span class="text-slate-500 text-sm flex-1" x-text="m.description"></span>
+              <span class="text-xs text-slate-700 font-mono group-hover:text-slate-600" x-text="m.id"></span>
+            </div>
+          </template>
+          <div x-show="!(config.models?.roster || []).length" class="text-slate-600 text-sm">No models configured.</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Chat page -->
+    <!-- ================================ CHAT ================================ -->
     <div x-show="currentPage === 'chat'" class="flex-1 flex flex-col overflow-hidden">
-      <div class="border-b border-gray-800 px-4 py-3 flex items-center gap-4">
-        <span class="font-semibold text-gray-200">Chat</span>
-        <select x-model="chatModel" @change="switchModel($event.target.value)" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-gray-300">
+      <!-- Chat header -->
+      <div class="flex items-center gap-4 px-6 py-4" style="border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15);">
+        <div class="flex items-center gap-2">
+          <div class="agent-avatar">⚡</div>
+          <span class="font-semibold text-slate-200">Chat</span>
+          <span class="dot-green" style="margin-left: 2px;"></span>
+        </div>
+        <select x-model="chatModel" @change="switchModel($event.target.value)" class="input-base px-3 py-1.5 text-sm text-slate-300 cursor-pointer ml-2">
           <template x-for="m in (config.models?.roster || [])" :key="m.alias">
             <option :value="m.alias" x-text="m.alias + ' — ' + m.description"></option>
           </template>
         </select>
         <div class="ml-auto">
           <button @click="takeSnapshot()" :disabled="snapshotBusy"
-            class="flex items-center gap-1.5 px-3 py-1 text-xs rounded border border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            title="Save a detailed memory snapshot of this conversation to today's log (session untouched)">
+            class="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-slate-500 hover:text-slate-300 border border-white/5 hover:border-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title="Save a detailed memory snapshot of this conversation to today's log">
             <span x-text="snapshotBusy ? '📸 Saving...' : '📸 Snapshot'"></span>
           </button>
         </div>
       </div>
-      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
+
+      <!-- Messages -->
+      <div id="chat-messages" class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
         <template x-for="msg in chatMessages" :key="msg.id">
-          <div :class="msg.role === 'user' ? 'msg-user' : 'msg-assistant'" class="rounded-lg p-3 text-sm">
-            <div class="text-xs text-gray-500 mb-1" x-text="msg.role === 'user' ? '👤 You' : '⚡ Agent'"></div>
-            <pre class="text-gray-200" x-text="msg.content"></pre>
+          <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start items-start gap-3'">
+            <div x-show="msg.role === 'assistant'" class="agent-avatar mt-0.5">⚡</div>
+            <div
+              :class="msg.role === 'user' ? 'bubble-user text-white max-w-xl' : 'bubble-assistant text-slate-200 max-w-2xl'"
+              class="px-4 py-3 text-sm leading-relaxed"
+            >
+              <div x-show="msg.role === 'user'" class="text-xs font-semibold mb-1 opacity-80" style="color: var(--accent-light);">You</div>
+              <div x-show="msg.role === 'assistant'" class="text-xs font-semibold mb-1 opacity-80" style="color: var(--accent-light);">⚡ Agent</div>
+              <pre class="text-inherit" x-text="msg.content"></pre>
+            </div>
           </div>
         </template>
-        <div x-show="thinking" class="msg-assistant rounded-lg p-3 text-sm text-gray-500">⚡ Thinking...</div>
+
+        <!-- Typing indicator -->
+        <div x-show="thinking" class="flex items-start gap-3">
+          <div class="agent-avatar">⚡</div>
+          <div class="bubble-assistant px-4 py-3.5">
+            <div class="flex gap-1.5 items-center h-4">
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="border-t border-gray-800 p-3 flex gap-2">
+
+      <!-- Chat input -->
+      <div class="px-6 py-4 flex gap-3" style="border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.1);">
         <textarea
           x-model="chatInput"
           @keydown.enter="if(!$event.shiftKey){ $event.preventDefault(); sendChat(); }"
-          placeholder="Type a message... (Shift+Enter for newline)"
+          placeholder="Send a message… (Shift+Enter for newline)"
           rows="2"
-          class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-helix"
+          class="chat-input input-base flex-1 px-4 py-3 text-sm resize-none rounded-2xl"
         ></textarea>
-        <button @click="sendChat()" :disabled="thinking || !chatInput.trim()" class="bg-helix hover:bg-helix-dark disabled:opacity-50 px-4 rounded-lg font-semibold transition">
-          Send
-        </button>
+        <button
+          @click="sendChat()"
+          :disabled="thinking || !chatInput.trim()"
+          class="btn-primary px-5 rounded-2xl text-sm self-stretch flex items-center"
+        >Send</button>
       </div>
     </div>
 
-    <!-- Sessions page -->
-    <div x-show="currentPage === 'sessions'" class="flex-1 overflow-y-auto p-6">
-      <h2 class="text-xl font-bold mb-4">Sessions</h2>
-      <div x-show="sessions.length === 0" class="text-gray-500">No active sessions.</div>
-      <div class="space-y-3">
+    <!-- ================================ SESSIONS ================================ -->
+    <div x-show="currentPage === 'sessions'" class="flex-1 overflow-y-auto p-7">
+      <h2 class="section-title mb-1">Sessions</h2>
+      <p class="text-slate-600 text-sm mb-6">Active conversations across all channels</p>
+      <div x-show="sessions.length === 0" class="text-slate-500 text-sm">No active sessions.</div>
+      <div class="space-y-4">
         <template x-for="s in sessions" :key="s.session_id">
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <div class="flex items-center justify-between mb-2">
-              <div class="font-mono text-xs text-helix-light" x-text="s.session_id.slice(0,8) + '...'"></div>
-              <button @click="resetSession(s.channel, s.peer)" class="text-xs text-red-400 hover:text-red-300">Reset</button>
+          <div class="card p-5">
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <div class="font-semibold text-slate-200 text-sm" x-text="s.channel + ':' + s.peer"></div>
+                <div class="font-mono text-xs text-slate-600 mt-0.5" x-text="'#' + s.session_id.slice(0,8)"></div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button @click="resetSession(s.channel, s.peer)" class="text-xs px-3 py-1.5 rounded-lg border border-red-500/20 text-red-500 hover:bg-red-500/10">Reset</button>
+              </div>
             </div>
-            <div class="grid grid-cols-2 gap-2 text-xs text-gray-400">
-              <div>Channel: <span class="text-gray-200" x-text="s.channel"></span></div>
-              <div>Peer: <span class="text-gray-200" x-text="s.peer"></span></div>
-              <div>Model: <span class="text-gray-200" x-text="s.model"></span></div>
-              <div>Tokens: <span class="text-gray-200" x-text="(s.token_count || 0).toLocaleString()"></span></div>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="bg-white/[0.02] rounded-lg p-3">
+                <div class="text-xs text-slate-600 mb-1">Model</div>
+                <div class="text-sm text-slate-300 font-medium" x-text="s.model"></div>
+              </div>
+              <div class="bg-white/[0.02] rounded-lg p-3">
+                <div class="text-xs text-slate-600 mb-1">Tokens</div>
+                <div class="text-sm text-slate-300 font-medium" x-text="(s.token_count || 0).toLocaleString()"></div>
+              </div>
             </div>
-            <button @click="loadTranscript(s.session_id)" class="mt-2 text-xs text-helix-light hover:underline">
-              View transcript →
+            <button @click="loadTranscript(s.session_id)" class="text-xs font-medium flex items-center gap-1" style="color: var(--accent-light);">
+              <span x-text="transcript.session_id === s.session_id ? '▲ Hide transcript' : '▼ View transcript'"></span>
             </button>
-            <div x-show="transcript.session_id === s.session_id" class="mt-3 bg-gray-950 rounded-lg p-3 max-h-48 overflow-y-auto">
+            <div x-show="transcript.session_id === s.session_id" class="mt-3 bg-black/30 rounded-xl p-4 max-h-48 overflow-y-auto space-y-2">
               <template x-for="msg in transcript.messages" :key="msg.role + Math.random()">
-                <div class="text-xs mb-2">
-                  <span class="text-gray-500" x-text="msg.role + ': '"></span>
-                  <span class="text-gray-300" x-text="typeof msg.content === 'string' ? msg.content.slice(0,200) : JSON.stringify(msg.content).slice(0,200)"></span>
+                <div class="flex gap-2 text-xs">
+                  <span class="font-semibold flex-shrink-0" :style="msg.role === 'user' ? 'color: var(--accent-light)' : 'color: #64748b'" x-text="msg.role + ':'"></span>
+                  <span class="text-slate-400 leading-relaxed" x-text="typeof msg.content === 'string' ? msg.content.slice(0,200) : JSON.stringify(msg.content).slice(0,200)"></span>
                 </div>
               </template>
             </div>
@@ -226,225 +821,239 @@
       </div>
     </div>
 
-    <!-- Memory page -->
-    <div x-show="currentPage === 'memory'" class="flex-1 overflow-y-auto p-6">
-      <h2 class="text-xl font-bold mb-4">Memory</h2>
-      <div class="flex gap-2 mb-4">
-        <input x-model="memoryQuery" @keyup.enter="searchMemory()" placeholder="Search memory..." class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-helix">
-        <select x-model="memorySearchMode" class="bg-gray-800 border border-gray-700 rounded px-2 text-sm text-gray-300">
-          <option value="vsearch">semantic</option>
-          <option value="search">keyword</option>
-          <option value="query">hybrid</option>
+    <!-- ================================ MEMORY ================================ -->
+    <div x-show="currentPage === 'memory'" class="flex-1 overflow-y-auto p-7">
+      <h2 class="section-title mb-1">Memory</h2>
+      <p class="text-slate-600 text-sm mb-6">Semantic search and long-term knowledge management</p>
+
+      <!-- Search -->
+      <div class="flex gap-3 mb-6">
+        <div class="flex-1 relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input x-model="memoryQuery" @keyup.enter="searchMemory()" placeholder="Search memory semantically…" class="input-base w-full pl-10 pr-4 py-2.5 text-sm">
+        </div>
+        <select x-model="memorySearchMode" class="input-base px-3 py-2.5 text-sm text-slate-400 cursor-pointer">
+          <option value="vsearch">Semantic</option>
+          <option value="search">Keyword</option>
+          <option value="query">Hybrid</option>
         </select>
-        <button @click="searchMemory()" class="bg-helix hover:bg-helix-dark px-4 py-2 rounded-lg text-sm font-semibold">Search</button>
+        <button @click="searchMemory()" class="btn-primary px-5 py-2.5 text-sm">Search</button>
       </div>
-      <div x-show="memoryResults" class="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-4 text-sm">
-        <div class="text-xs text-gray-500 mb-2">Search results:</div>
+
+      <!-- Search results -->
+      <div x-show="memoryResults" class="card p-4 mb-5">
+        <div class="text-xs text-slate-600 mb-3 font-medium uppercase tracking-wider">Search Results</div>
         <pre class="text-gray-300 text-xs" x-text="memoryResults"></pre>
       </div>
 
-      <div class="grid md:grid-cols-2 gap-4">
-        <!-- Today's log -->
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <h3 class="font-semibold mb-2 text-gray-300">Today's Log</h3>
-          <pre x-show="todayMemory" class="text-xs text-gray-400 max-h-64 overflow-y-auto" x-text="todayMemory"></pre>
-          <p x-show="!todayMemory" class="text-gray-600 text-sm">No entries today.</p>
+      <div class="grid md:grid-cols-2 gap-5">
+        <div class="card p-5">
+          <h3 class="font-semibold text-slate-300 mb-3 flex items-center gap-2">
+            <span>📅</span> Today's Log
+          </h3>
+          <pre x-show="todayMemory" class="bg-black/30 rounded-xl p-4 max-h-64 overflow-y-auto text-xs text-slate-400 leading-relaxed" x-text="todayMemory"></pre>
+          <p x-show="!todayMemory" class="text-slate-600 text-sm">No entries today.</p>
         </div>
-
-        <!-- MEMORY.md editor -->
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <h3 class="font-semibold mb-2 text-gray-300">MEMORY.md (Long-term)</h3>
+        <div class="card p-5">
+          <h3 class="font-semibold text-slate-300 mb-3 flex items-center gap-2">
+            <span>🧠</span> MEMORY.md
+            <span class="text-xs text-slate-700 font-normal ml-auto">Long-term</span>
+          </h3>
           <textarea
             x-model="longTermMemory"
-            rows="8"
-            class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs font-mono resize-none focus:outline-none focus:border-helix"
+            rows="9"
+            class="input-base w-full px-3 py-2.5 text-xs font-mono resize-none"
           ></textarea>
-          <button @click="saveLongTermMemory()" class="mt-2 bg-helix hover:bg-helix-dark px-3 py-1 rounded text-sm font-semibold">Save</button>
-          <span x-show="memorySaved" class="ml-2 text-xs text-green-400">Saved!</span>
+          <div class="flex items-center gap-3 mt-3">
+            <button @click="saveLongTermMemory()" class="btn-primary px-4 py-2 text-sm">Save</button>
+            <span x-show="memorySaved" class="text-xs text-emerald-400">Saved!</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Config page -->
-    <div x-show="currentPage === 'config'" class="flex-1 overflow-y-auto p-6">
-      <h2 class="text-xl font-bold mb-4">Configuration</h2>
-      <div class="grid md:grid-cols-2 gap-4">
+    <!-- ================================ CONFIG ================================ -->
+    <div x-show="currentPage === 'config'" class="flex-1 overflow-y-auto p-7">
+      <h2 class="section-title mb-1">Configuration</h2>
+      <p class="text-slate-600 text-sm mb-6">Manage channels, models, and integrations</p>
+
+      <div class="grid md:grid-cols-2 gap-5">
         <!-- Discord -->
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <h3 class="font-semibold mb-3 text-gray-300">Discord</h3>
-          <label class="flex items-center gap-2 mb-3 text-sm">
+        <div class="card p-5">
+          <h3 class="font-semibold text-slate-300 mb-4 flex items-center gap-2">
+            <span class="text-lg">🎮</span> Discord
+            <span x-show="config.discord?.enabled" class="badge-active ml-auto">enabled</span>
+            <span x-show="!config.discord?.enabled" class="badge-paused ml-auto">disabled</span>
+          </h3>
+          <label class="flex items-center gap-2 mb-3 text-sm cursor-pointer">
             <input type="checkbox" x-model="config.discord.enabled" @change="saveDiscordConfig()" class="rounded">
-            <span>Enabled</span>
+            <span class="text-slate-300">Enabled</span>
           </label>
-          <label class="block text-xs text-gray-500 mb-1">Allowed User IDs (one per line)</label>
+          <label class="block text-xs text-slate-600 mb-1.5 font-medium">Allowed User IDs (one per line)</label>
           <textarea
             :value="(config.discord?.allowed_users || []).join('\n')"
             @change="config.discord.allowed_users = $event.target.value.split('\n').filter(Boolean); saveDiscordConfig()"
             rows="4"
-            class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs font-mono resize-none focus:outline-none focus:border-helix"
+            class="input-base w-full px-3 py-2 text-xs font-mono resize-none mb-3"
           ></textarea>
-          <label class="flex items-center gap-2 mt-2 text-sm">
+          <label class="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" x-model="config.discord.mention_only" @change="saveDiscordConfig()" class="rounded">
-            <span>Mention-only in guild channels</span>
+            <span class="text-slate-400">Mention-only in guild channels</span>
           </label>
         </div>
 
         <!-- Telegram -->
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <h3 class="font-semibold mb-3 text-gray-300">Telegram</h3>
-          <label class="flex items-center gap-2 mb-3 text-sm">
+        <div class="card p-5">
+          <h3 class="font-semibold text-slate-300 mb-4 flex items-center gap-2">
+            <span class="text-lg">✈️</span> Telegram
+            <span x-show="config.telegram?.enabled" class="badge-active ml-auto">enabled</span>
+            <span x-show="!config.telegram?.enabled" class="badge-paused ml-auto">disabled</span>
+          </h3>
+          <label class="flex items-center gap-2 mb-3 text-sm cursor-pointer">
             <input type="checkbox" x-model="config.telegram.enabled" @change="saveTelegramConfig()" class="rounded">
-            <span>Enabled</span>
+            <span class="text-slate-300">Enabled</span>
           </label>
-          <label class="block text-xs text-gray-500 mb-1">Allowed User IDs (one per line)</label>
+          <label class="block text-xs text-slate-600 mb-1.5 font-medium">Allowed User IDs (one per line)</label>
           <textarea
             :value="(config.telegram?.allowed_users || []).join('\n')"
             @change="config.telegram.allowed_users = $event.target.value.split('\n').filter(Boolean).map(Number); saveTelegramConfig()"
             rows="4"
-            class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs font-mono resize-none focus:outline-none focus:border-helix"
+            class="input-base w-full px-3 py-2 text-xs font-mono resize-none"
           ></textarea>
         </div>
 
         <!-- Add model -->
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <h3 class="font-semibold mb-3 text-gray-300">Add Model</h3>
-          <input x-model="newModel.id" placeholder="Model ID (e.g. claude-opus-4-6)" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs mb-2 focus:outline-none focus:border-helix">
-          <input x-model="newModel.alias" placeholder="Alias (e.g. opus)" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs mb-2 focus:outline-none focus:border-helix">
-          <input x-model="newModel.description" placeholder="Description" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs mb-2 focus:outline-none focus:border-helix">
-          <select x-model="newModel.tier" class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs mb-2 focus:outline-none focus:border-helix">
-            <option value="fast">fast</option>
-            <option value="balanced">balanced</option>
-            <option value="powerful">powerful</option>
-          </select>
-          <button @click="addModel()" class="bg-helix hover:bg-helix-dark px-3 py-1 rounded text-sm font-semibold">Add Model</button>
-          <span x-show="modelAdded" class="ml-2 text-xs text-green-400">Added!</span>
+        <div class="card p-5">
+          <h3 class="font-semibold text-slate-300 mb-4 flex items-center gap-2">
+            <span class="text-lg">🤖</span> Add Model
+          </h3>
+          <div class="space-y-2.5">
+            <input x-model="newModel.id" placeholder="Model ID (e.g. claude-opus-4-6)" class="input-base w-full px-3 py-2.5 text-sm">
+            <input x-model="newModel.alias" placeholder="Alias (e.g. opus)" class="input-base w-full px-3 py-2.5 text-sm">
+            <input x-model="newModel.description" placeholder="Description" class="input-base w-full px-3 py-2.5 text-sm">
+            <select x-model="newModel.tier" class="input-base w-full px-3 py-2.5 text-sm text-slate-400 cursor-pointer">
+              <option value="fast">fast</option>
+              <option value="balanced">balanced</option>
+              <option value="powerful">powerful</option>
+            </select>
+            <button @click="addModel()" class="btn-primary px-4 py-2.5 text-sm w-full">Add Model</button>
+            <span x-show="modelAdded" class="text-xs text-emerald-400">Added!</span>
+          </div>
+        </div>
+
+        <!-- Configured models list -->
+        <div class="card p-5">
+          <h3 class="font-semibold text-slate-300 mb-4 flex items-center gap-2">
+            <span class="text-lg">📋</span> Configured Models
+          </h3>
+          <div class="space-y-2.5">
+            <template x-for="m in (config.models?.roster || [])" :key="m.alias">
+              <div class="flex items-center gap-3 py-2.5 px-3 rounded-lg bg-white/[0.02] group">
+                <span class="chip font-mono" x-text="m.alias"></span>
+                <span :class="'tier-' + m.tier" x-text="m.tier"></span>
+                <span class="text-xs text-slate-500 flex-1 truncate" x-text="m.description"></span>
+              </div>
+            </template>
+            <div x-show="!(config.models?.roster || []).length" class="text-slate-600 text-sm">No models configured.</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Crons page -->
-    <div x-show="currentPage === 'crons'" class="flex-1 overflow-y-auto p-6">
+    <!-- ================================ CRONS ================================ -->
+    <div x-show="currentPage === 'crons'" class="flex-1 overflow-y-auto p-7">
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold">Cron Jobs</h2>
-        <button
-          @click="cronFormOpen = !cronFormOpen"
-          class="bg-helix hover:bg-helix-dark px-4 py-2 rounded-lg text-sm font-semibold transition"
-          x-text="cronFormOpen ? '✕ Cancel' : '+ Add Cron'"
-        ></button>
+        <div>
+          <h2 class="section-title">Cron Jobs</h2>
+          <p class="text-slate-600 text-sm mt-0.5">Scheduled autonomous agent tasks</p>
+        </div>
+        <button @click="cronFormOpen = !cronFormOpen" class="btn-primary px-4 py-2 text-sm flex items-center gap-2"
+          x-text="cronFormOpen ? '✕ Cancel' : '+ Add Cron'"></button>
       </div>
 
       <!-- Add cron form -->
-      <div x-show="cronFormOpen" x-transition class="bg-gray-900 border border-helix/40 rounded-xl p-5 mb-6">
-        <h3 class="font-semibold mb-4 text-gray-300">New Cron Job</h3>
-        <div class="grid md:grid-cols-2 gap-3 mb-3">
+      <div x-show="cronFormOpen" x-transition class="card mb-6 p-6" style="border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.25); box-shadow: 0 0 0 1px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.1), inset 0 0 40px rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.03);">
+        <h3 class="font-semibold text-slate-300 mb-5">New Cron Job</h3>
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Name</label>
-            <input
-              x-model="newCron.name"
-              placeholder="e.g. Morning Briefing"
-              class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-helix"
-            >
+            <label class="block text-xs text-slate-600 mb-1.5 font-medium">Name</label>
+            <input x-model="newCron.name" placeholder="e.g. Morning Briefing" class="input-base w-full px-3 py-2.5 text-sm">
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Schedule (cron expression, uses configured timezone)</label>
-            <input
-              x-model="newCron.schedule"
-              placeholder="e.g. 0 8 * * * (daily at 8 AM)"
-              class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-helix"
-            >
+            <label class="block text-xs text-slate-600 mb-1.5 font-medium">Schedule (cron expression, uses configured timezone)</label>
+            <input x-model="newCron.schedule" placeholder="e.g. 0 8 * * * (daily at 8 AM)" class="input-base w-full px-3 py-2.5 text-sm font-mono">
           </div>
         </div>
-        <div class="mb-3">
-          <label class="block text-xs text-gray-500 mb-1">Prompt (what to tell the agent when this fires)</label>
-          <textarea
-            x-model="newCron.prompt"
-            rows="3"
-            placeholder="e.g. Run a quick security audit and summarize any alerts."
-            class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm resize-none focus:outline-none focus:border-helix"
-          ></textarea>
+        <div class="mb-4">
+          <label class="block text-xs text-slate-600 mb-1.5 font-medium">Prompt (what to tell the agent when this fires)</label>
+          <textarea x-model="newCron.prompt" rows="3" placeholder="e.g. Run a quick security audit and summarize any alerts." class="input-base w-full px-3 py-2.5 text-sm resize-none"></textarea>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-end gap-4">
           <div class="flex-1">
-            <label class="block text-xs text-gray-500 mb-1">Model override (optional, defaults to heartbeat model)</label>
-            <select x-model="newCron.model" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-helix">
+            <label class="block text-xs text-slate-600 mb-1.5 font-medium">Model override (optional, defaults to heartbeat model)</label>
+            <select x-model="newCron.model" class="input-base w-full px-3 py-2.5 text-sm text-slate-400 cursor-pointer">
               <option value="">Default (heartbeat model)</option>
               <template x-for="m in (config.models?.roster || [])" :key="m.alias">
                 <option :value="m.alias" x-text="m.alias + ' — ' + m.description"></option>
               </template>
             </select>
           </div>
-          <div class="flex items-center gap-2 pt-4">
-            <input type="checkbox" x-model="newCron.enabled" id="newCronEnabled" class="rounded">
-            <label for="newCronEnabled" class="text-sm text-gray-300">Enabled</label>
-          </div>
+          <label class="flex items-center gap-2 pb-2.5 cursor-pointer">
+            <input type="checkbox" x-model="newCron.enabled" class="rounded border-slate-700">
+            <span class="text-sm text-slate-300">Enabled</span>
+          </label>
+          <button @click="addCron()" :disabled="!newCron.name || !newCron.schedule || !newCron.prompt" class="btn-primary px-5 py-2.5 text-sm">Add Job</button>
         </div>
-        <div class="flex items-center gap-3 mt-4">
-          <button
-            @click="addCron()"
-            :disabled="!newCron.name || !newCron.schedule || !newCron.prompt"
-            class="bg-helix hover:bg-helix-dark disabled:opacity-50 px-5 py-2 rounded-lg text-sm font-semibold transition"
-          >
-            Add Cron Job
-          </button>
+        <div class="mt-2 flex items-center gap-3">
           <span x-show="cronAddError" class="text-xs text-red-400" x-text="cronAddError"></span>
-          <span x-show="cronAdded" class="text-xs text-green-400">Added!</span>
+          <span x-show="cronAdded" class="text-xs text-emerald-400">Added!</span>
         </div>
       </div>
 
       <!-- Cron list -->
-      <div x-show="crons.length === 0 && !cronFormOpen" class="text-gray-500 text-sm">
+      <div x-show="crons.length === 0 && !cronFormOpen" class="text-slate-500 text-sm">
         No cron jobs configured. Click <strong>+ Add Cron</strong> to create one.
       </div>
       <div class="space-y-3">
         <template x-for="cron in crons" :key="cron.id">
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <div class="flex items-start justify-between gap-3">
+          <div class="card p-5">
+            <div class="flex items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="font-semibold text-gray-200" x-text="cron.name"></span>
-                  <span
-                    class="text-xs px-2 py-0.5 rounded-full font-medium"
-                    :class="cron.enabled ? 'bg-green-900/40 text-green-400' : 'bg-gray-700 text-gray-500'"
-                    x-text="cron.enabled ? 'active' : 'paused'"
-                  ></span>
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="font-semibold text-slate-200" x-text="cron.name"></span>
+                  <span :class="cron.enabled ? 'badge-active' : 'badge-paused'" x-text="cron.enabled ? 'active' : 'paused'"></span>
                 </div>
-                <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400 mb-2">
+                <div class="flex flex-wrap gap-x-5 gap-y-1.5 text-xs mb-3">
                   <span>
-                    <span class="text-gray-600">schedule: </span>
-                    <span class="font-mono text-helix-light" x-text="cron.schedule"></span>
+                    <span class="text-slate-600">schedule </span>
+                    <code class="cron-code font-mono" x-text="cron.schedule"></code>
                   </span>
                   <span x-show="cron.model">
-                    <span class="text-gray-600">model: </span>
-                    <span class="text-gray-300" x-text="cron.model"></span>
+                    <span class="text-slate-600">model </span>
+                    <span class="text-slate-400" x-text="cron.model"></span>
                   </span>
                   <span x-show="cron.next_run">
-                    <span class="text-gray-600">next: </span>
-                    <span class="text-gray-300" x-text="cron.next_run ? new Date(cron.next_run).toLocaleString() : '—'"></span>
+                    <span class="text-slate-600">next </span>
+                    <span class="text-slate-400" x-text="cron.next_run ? new Date(cron.next_run).toLocaleString() : '—'"></span>
                   </span>
                   <span x-show="cron.last_run">
-                    <span class="text-gray-600">last: </span>
-                    <span class="text-gray-300" x-text="cron.last_run ? new Date(cron.last_run).toLocaleString() : '—'"></span>
+                    <span class="text-slate-600">last </span>
+                    <span class="text-slate-400" x-text="cron.last_run ? new Date(cron.last_run).toLocaleString() : '—'"></span>
                   </span>
                 </div>
-                <div class="text-xs text-gray-500 bg-gray-950 rounded px-3 py-2 font-mono truncate" x-text="cron.prompt"></div>
+                <div class="text-xs text-slate-500 bg-black/30 rounded-lg px-3 py-2 font-mono truncate" x-text="cron.prompt"></div>
               </div>
               <div class="flex flex-col gap-2 flex-shrink-0">
                 <button
                   @click="toggleCron(cron)"
-                  class="text-xs px-3 py-1 rounded border transition"
-                  :class="cron.enabled
-                    ? 'border-yellow-700 text-yellow-500 hover:bg-yellow-900/20'
-                    : 'border-green-700 text-green-500 hover:bg-green-900/20'"
+                  class="text-xs px-3 py-1.5 rounded-lg border transition"
+                  :class="cron.enabled ? 'border-yellow-600/30 text-yellow-500 hover:bg-yellow-500/10' : 'border-emerald-600/30 text-emerald-500 hover:bg-emerald-500/10'"
                   x-text="cron.enabled ? 'Pause' : 'Resume'"
                 ></button>
-                <button
-                  @click="runCronNow(cron)"
-                  class="text-xs px-3 py-1 rounded border border-helix/50 text-helix-light hover:bg-helix/10 transition"
+                <button @click="runCronNow(cron)" class="text-xs px-3 py-1.5 rounded-lg border transition"
+                  style="border-color: rgba(var(--accent-r),var(--accent-g),var(--accent-b),0.3); color: var(--accent-light);"
                 >Run Now</button>
-                <button
-                  @click="deleteCron(cron)"
-                  class="text-xs px-3 py-1 rounded border border-red-900 text-red-500 hover:bg-red-900/20 transition"
-                >Delete</button>
+                <button @click="deleteCron(cron)" class="text-xs px-3 py-1.5 rounded-lg border border-red-500/20 text-red-500 hover:bg-red-500/10">Delete</button>
               </div>
             </div>
           </div>
@@ -452,38 +1061,42 @@
       </div>
     </div>
 
-    <!-- Logs page -->
-    <div x-show="currentPage === 'logs'" class="flex-1 flex flex-col overflow-hidden p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-bold">Logs</h2>
-        <div class="flex gap-2">
-          <button @click="logTab = 'audit'; loadAuditLogs()" :class="logTab === 'audit' ? 'bg-helix text-white' : 'bg-gray-800 text-gray-400'" class="px-3 py-1 rounded text-sm">Audit</button>
-          <button @click="logTab = 'op'; loadOpLogs()" :class="logTab === 'op' ? 'bg-helix text-white' : 'bg-gray-800 text-gray-400'" class="px-3 py-1 rounded text-sm">Operational</button>
-          <button @click="refreshLogs()" class="bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded text-sm text-gray-400">Refresh</button>
+    <!-- ================================ LOGS ================================ -->
+    <div x-show="currentPage === 'logs'" class="flex-1 flex flex-col overflow-hidden p-7">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h2 class="section-title">Logs</h2>
+          <p class="text-slate-600 text-sm mt-0.5">Audit trail and operational output</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button @click="logTab = 'audit'; loadAuditLogs()" :class="logTab === 'audit' ? 'tab-active' : 'tab-inactive'" class="px-4 py-2 rounded-lg text-sm font-medium">Audit</button>
+          <button @click="logTab = 'op'; loadOpLogs()" :class="logTab === 'op' ? 'tab-active' : 'tab-inactive'" class="px-4 py-2 rounded-lg text-sm font-medium">Operational</button>
+          <button @click="refreshLogs()" class="px-3 py-2 rounded-lg text-sm text-slate-600 border border-white/5 hover:border-white/10 hover:text-slate-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </button>
         </div>
       </div>
-      <div class="flex-1 overflow-y-auto bg-gray-900 border border-gray-800 rounded-xl p-4 font-mono text-xs">
+      <div class="flex-1 overflow-y-auto card p-5 font-mono text-xs">
         <template x-if="logTab === 'audit'">
-          <div>
+          <div class="space-y-0.5">
             <template x-for="(line, i) in auditLogs" :key="i">
-              <div class="mb-1 text-gray-400">
-                <span class="text-gray-600" x-text="new Date((line.ts || 0) * 1000).toLocaleTimeString() + ' '"></span>
-                <span :class="{
+              <div class="log-line flex items-start gap-3 py-1 px-2 rounded">
+                <span class="text-slate-700 flex-shrink-0 w-20" x-text="new Date((line.ts || 0) * 1000).toLocaleTimeString()"></span>
+                <span class="font-semibold flex-shrink-0 w-36" :class="{
                   'text-red-400': line.event === 'auth_rejection' || line.event === 'injection_detected',
                   'text-yellow-400': line.event === 'error',
-                  'text-green-400': line.event === 'message_sent',
+                  'text-emerald-400': line.event === 'message_sent',
                   'text-blue-400': line.event === 'message_received',
-                  'text-purple-400': line.event === 'tool_invoked',
-                }" x-text="line.event || 'unknown'"></span>
-                <span x-text="' — ' + (line.channel || '') + ' ' + (line.sender_id || '') + ' ' + (line.content_preview || line.reason || line.tool_name || '')"></span>
+                }" :style="line.event === 'tool_invoked' ? 'color: var(--accent-light)' : ''" x-text="line.event || 'unknown'"></span>
+                <span class="text-slate-500" x-text="' — ' + (line.channel || '') + ' ' + (line.sender_id || '') + ' ' + (line.content_preview || line.reason || line.tool_name || '')"></span>
               </div>
             </template>
           </div>
         </template>
         <template x-if="logTab === 'op'">
-          <div>
+          <div class="space-y-0.5">
             <template x-for="(line, i) in opLogs" :key="i">
-              <div class="mb-0.5 text-gray-400" x-text="line"></div>
+              <div class="log-line py-0.5 px-2 text-slate-400" x-text="line"></div>
             </template>
           </div>
         </template>
@@ -502,13 +1115,13 @@ function helixApp() {
     token: localStorage.getItem('helix_token') || '',
     currentPage: 'home',
     pages: [
-      { id: 'home',     label: '🏠 Home' },
-      { id: 'chat',     label: '💬 Chat' },
-      { id: 'sessions', label: '📋 Sessions' },
-      { id: 'memory',   label: '🧠 Memory' },
-      { id: 'config',   label: '⚙️ Config' },
-      { id: 'crons',    label: '⏰ Crons' },
-      { id: 'logs',     label: '📜 Logs' },
+      { id: 'home',     label: 'Home',     icon: '◈' },
+      { id: 'chat',     label: 'Chat',     icon: '◎' },
+      { id: 'sessions', label: 'Sessions', icon: '◻' },
+      { id: 'memory',   label: 'Memory',   icon: '⬡' },
+      { id: 'config',   label: 'Config',   icon: '◉' },
+      { id: 'crons',    label: 'Crons',    icon: '◷' },
+      { id: 'logs',     label: 'Logs',     icon: '≡' },
     ],
     health: {},
     config: { discord: {}, telegram: {}, models: { roster: [] } },
@@ -533,14 +1146,25 @@ function helixApp() {
     modelAdded: false,
     msgCounter: 0,
     snapshotBusy: false,
-    // Crons state
+    // Crons
     crons: [],
     cronFormOpen: false,
     newCron: { name: '', schedule: '', prompt: '', model: '', enabled: true },
     cronAdded: false,
     cronAddError: '',
+    // Theme
+    theme: localStorage.getItem('helix_theme') || 'classic',
+    lightMode: localStorage.getItem('helix_dark_mode') === 'light',
+    themes: [
+      { id: 'classic', name: 'Classic', color: '#7c3aed' },
+      { id: 'volcano', name: 'Volcano', color: '#f59e0b' },
+      { id: 'ocean',   name: 'Ocean',   color: '#0891b2' },
+      { id: 'forest',  name: 'Forest',  color: '#4a9424' },
+    ],
 
     async init() {
+      this.applyTheme(this.theme);
+      this.applyMode(this.lightMode);
       if (this.token) {
         const ok = await this.checkAuth();
         if (ok) {
@@ -549,6 +1173,40 @@ function helixApp() {
           return;
         }
       }
+    },
+
+    applyTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+    },
+
+    applyMode(isLight) {
+      if (isLight) {
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.remove('light');
+        document.documentElement.classList.add('dark');
+      }
+    },
+
+    setTheme(t) {
+      this.theme = t;
+      localStorage.setItem('helix_theme', t);
+      this.applyTheme(t);
+    },
+
+    toggleMode() {
+      this.lightMode = !this.lightMode;
+      localStorage.setItem('helix_dark_mode', this.lightMode ? 'light' : 'dark');
+      this.applyMode(this.lightMode);
+    },
+
+    currentThemeName() {
+      return (this.themes.find(t => t.id === this.theme) || {}).name || 'Classic';
+    },
+
+    currentThemeColor() {
+      return (this.themes.find(t => t.id === this.theme) || {}).color || '#7c3aed';
     },
 
     onPageChange(pageId) {
@@ -596,7 +1254,6 @@ function helixApp() {
     },
 
     async loadAll() {
-      // Config must load before sessions so the model roster is available for alias resolution
       await this.loadConfig();
       await Promise.all([
         this.loadHealth(),
@@ -606,7 +1263,6 @@ function helixApp() {
         this.loadCrons(),
         this.connectWS(),
       ]);
-      // Auto-refresh every 30s
       setInterval(() => { this.loadHealth(); this.loadSessions(); }, 30000);
     },
 
@@ -634,7 +1290,6 @@ function helixApp() {
         const r = await this.api('/api/sessions');
         if (r.ok) {
           this.sessions = await r.json();
-          // Sync model dropdown to actual current session model (resolve full ID → alias)
           const webSession = this.sessions.find(s => s.channel === 'web' && s.peer === 'admin');
           if (webSession?.model) {
             const roster = this.config.models?.roster || [];
@@ -770,10 +1425,7 @@ function helixApp() {
 
     async runCronNow(cron) {
       const r = await this.api(`/api/crons/${cron.id}/run`, { method: 'POST' });
-      if (r.ok) {
-        // Briefly show feedback by refreshing after a moment
-        setTimeout(() => this.loadCrons(), 3000);
-      }
+      if (r.ok) setTimeout(() => this.loadCrons(), 3000);
     },
 
     // ── Log methods ───────────────────────────────────────────────────────────
@@ -812,7 +1464,6 @@ function helixApp() {
           if (data.status === 'connected') {
             this.wsStatus = 'connected';
           } else if (data.chunk) {
-            // Streaming chunk: append to last assistant message
             const last = this.chatMessages[this.chatMessages.length - 1];
             if (last && last.role === 'assistant') {
               last.content += data.chunk;
@@ -838,16 +1489,12 @@ function helixApp() {
       const content = this.chatInput.trim();
       this.chatInput = '';
       this.thinking = true;
-
       this.chatMessages.push({ id: ++this.msgCounter, role: 'user', content });
       this.chatMessages.push({ id: ++this.msgCounter, role: 'assistant', content: '' });
-
-      // Scroll to bottom
       this.$nextTick(() => {
         const el = document.getElementById('chat-messages');
         if (el) el.scrollTop = el.scrollHeight;
       });
-
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
         this.ws.send(JSON.stringify({ message: content }));
       } else {

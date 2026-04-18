@@ -2,6 +2,14 @@
 
 All notable changes to Helix Agent will be documented here.
 
+## [1.3.0] - 2026-04-17
+
+### Added
+- Complete UI redesign: Inter font, polished cards, frosted login, chat bubble style, animated status indicators
+- Theme system with 4 built-in themes: Classic (purple), Volcano (amber), Ocean (cyan), Forest (green)
+- Dark/light mode toggle persisted to localStorage
+- Theme selector in sidebar persisted to localStorage
+
 ## [1.2.1] - 2026-04-17
 
 ### Fixed
