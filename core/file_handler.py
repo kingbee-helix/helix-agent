@@ -33,10 +33,6 @@ def _sanitize_filename(filename: str) -> str:
     name = Path(filename).name
     # Replace any remaining path-separator-like characters
     name = name.replace("/", "_").replace("\\", "_")
-    # Strip leading dots to avoid hidden-file tricks (keep extension dots)
-    if name.startswith(".") and "." in name[1:]:
-        # e.g. ".bashrc" → keep as-is; ".." → replace
-        pass
     name = name.strip() or "upload"
     return name
 

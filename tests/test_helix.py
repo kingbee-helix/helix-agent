@@ -19,6 +19,19 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # ---------------------------------------------------------------------------
+# Import real FastAPI TestClient BEFORE any stub sections run.
+# The stub guard below only fires if fastapi is not yet in sys.modules.
+# By importing TestClient here first, the real package is registered and
+# the stub guard will be skipped, so integration tests get the real FastAPI.
+# ---------------------------------------------------------------------------
+try:
+    from fastapi.testclient import TestClient as _RealTestClient
+    _HAS_REAL_FASTAPI = True
+except ImportError:
+    _RealTestClient = None  # type: ignore
+    _HAS_REAL_FASTAPI = False
+
+# ---------------------------------------------------------------------------
 # Minimal stubs so we can import project modules without real external deps
 # ---------------------------------------------------------------------------
 
@@ -421,7 +434,7 @@ class TestSnapshotRoute:
         assert "user_message" in captured_kwargs
         assert "model" in captured_kwargs
         assert "is_new_session" in captured_kwargs
-        assert captured_kwargs["is_new_session"] is True
+        assert captured_kwargs["is_new_session"] is False
 
 
 # ---------------------------------------------------------------------------
@@ -624,3 +637,297 @@ class TestSlashCommands:
 
         assert handled is True
         assert any("Unknown" in r or "unknown" in r for r in responses)
+
+
+# ---------------------------------------------------------------------------
+# Integration tests — snapshot route via TestClient
+# ---------------------------------------------------------------------------
+
+@pytest.mark.skipif(not _HAS_REAL_FASTAPI, reason="fastapi not installed")
+class TestSnapshotIntegration:
+    """Integration tests for the snapshot endpoint via FastAPI TestClient.
+
+    The real app layer is exercised; external deps (Claude API) are mocked.
+    """
+
+    def _make_client(self, tmp_path, monkeypatch):
+        """Return a TestClient with all external deps patched."""
+        import importlib
+        import web.app as app_mod
+
+        # Reload so fresh module state is used for this test
+        importlib.reload(app_mod)
+
+        TestClient = _RealTestClient
+
+        cfg = _make_temp_config(tmp_path)
+
+        session_stub = {
+            "session_id": str(uuid.uuid4()),
+            "channel": "web",
+            "peer": "admin",
+        }
+        session_manager = MagicMock()
+        session_manager.get_or_create = AsyncMock(return_value=session_stub)
+        session_manager.read_transcript = MagicMock(return_value=[
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Hi there"},
+        ])
+
+        agent_loop = MagicMock()
+
+        monkeypatch.setattr(app_mod, "_session_manager", session_manager)
+        monkeypatch.setattr(app_mod, "_agent_loop", agent_loop)
+        monkeypatch.setattr(app_mod, "get_config", lambda: cfg)
+
+        # Patch call_claude inside the snapshot route
+        async def fake_call_claude(**kwargs):
+            return ("Snapshot summary text.", "fake-sid", {})
+
+        monkeypatch.setattr("core.cli_backend.call_claude", fake_call_claude)
+
+        # Patch _verify_token so requests are treated as authenticated
+        monkeypatch.setattr(app_mod, "_verify_token", lambda token: True)
+
+        client = TestClient(app_mod.app, raise_server_exceptions=False)
+        return client
+
+    def test_snapshot_returns_200(self, tmp_path, monkeypatch):
+        client = self._make_client(tmp_path, monkeypatch)
+        resp = client.post(
+            "/api/sessions/web/admin/snapshot",
+            headers={"Authorization": "Bearer validtoken"},
+        )
+        assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.text}"
+        data = resp.json()
+        assert data.get("status") == "ok"
+
+    def test_snapshot_not_500(self, tmp_path, monkeypatch):
+        """Regression: snapshot route must not return 500 under normal conditions."""
+        client = self._make_client(tmp_path, monkeypatch)
+        resp = client.post(
+            "/api/sessions/web/admin/snapshot",
+            headers={"Authorization": "Bearer validtoken"},
+        )
+        assert resp.status_code != 500, f"Snapshot returned 500: {resp.text}"
+
+    def test_snapshot_empty_session_returns_empty_status(self, tmp_path, monkeypatch):
+        """When session has no messages, should return empty status not 500."""
+        import importlib
+        import web.app as app_mod
+        importlib.reload(app_mod)
+
+        TestClient = _RealTestClient
+
+        cfg = _make_temp_config(tmp_path)
+        session_stub = {"session_id": str(uuid.uuid4()), "channel": "web", "peer": "admin"}
+        session_manager = MagicMock()
+        session_manager.get_or_create = AsyncMock(return_value=session_stub)
+        session_manager.read_transcript = MagicMock(return_value=[])  # empty
+        agent_loop = MagicMock()
+
+        monkeypatch.setattr(app_mod, "_session_manager", session_manager)
+        monkeypatch.setattr(app_mod, "_agent_loop", agent_loop)
+        monkeypatch.setattr(app_mod, "get_config", lambda: cfg)
+        monkeypatch.setattr(app_mod, "_verify_token", lambda token: True)
+
+        client = TestClient(app_mod.app, raise_server_exceptions=False)
+        resp = client.post(
+            "/api/sessions/web/admin/snapshot",
+            headers={"Authorization": "Bearer validtoken"},
+        )
+        assert resp.status_code == 200
+        assert resp.json().get("status") == "empty"
+
+
+# ---------------------------------------------------------------------------
+# Integration tests — slash command flow via adapter boundary
+# ---------------------------------------------------------------------------
+
+class TestSlashCommandAdapterBoundary:
+    """Exercise slash commands through the full handle_slash interface
+    (adapter boundary), not just internal logic.
+
+    These tests verify that when a message arrives at the channel boundary
+    as a slash command string, the correct side effects occur end-to-end.
+    """
+
+    def _make_sm(self):
+        sm = MagicMock()
+        sm.get_or_create = AsyncMock(return_value={
+            "session_id": str(uuid.uuid4()),
+            "channel": "discord",
+            "peer": "user42",
+            "agent_id": "helix",
+            "model": "claude-sonnet-4-6",
+            "last_active": 1_700_000_000.0,
+            "compacted": 0,
+            "token_count": 0,
+            "context_window": 0,
+            "max_output_tokens": 0,
+        })
+        sm.list_sessions = AsyncMock(return_value=[])
+        sm.reset_session = AsyncMock()
+        sm.set_model = AsyncMock()
+        sm.read_transcript = MagicMock(return_value=[])
+        return sm
+
+    def _make_loop(self):
+        loop = MagicMock()
+        loop.run_heartbeat = AsyncMock(return_value="HEARTBEAT_OK")
+        return loop
+
+    @pytest.mark.anyio
+    async def test_help_command_returns_response(self, tmp_path):
+        """Adapter receives /help → handle_slash returns True and sends text."""
+        sent = []
+
+        async def send(text):
+            sent.append(text)
+
+        cfg = _make_temp_config(tmp_path)
+        with patch("channels.slash_commands.get_config", return_value=cfg):
+            from channels.slash_commands import handle_slash
+            result = await handle_slash("/help", "discord", "user42",
+                                        self._make_sm(), self._make_loop(), send)
+
+        assert result is True
+        assert sent, "Expected /help to produce at least one response"
+        combined = "\n".join(sent)
+        assert "/new" in combined or "Commands" in combined
+
+    @pytest.mark.anyio
+    async def test_new_resets_session_via_adapter(self, tmp_path):
+        """/new coming through adapter boundary must reset the session."""
+        sent = []
+
+        async def send(text):
+            sent.append(text)
+
+        sm = self._make_sm()
+        cfg = _make_temp_config(tmp_path)
+        with patch("channels.slash_commands.get_config", return_value=cfg):
+            from channels.slash_commands import handle_slash
+            result = await handle_slash("/new", "discord", "user42",
+                                        sm, self._make_loop(), send)
+
+        assert result is True
+        sm.reset_session.assert_awaited_once_with("discord", "user42")
+        assert sent, "Expected a confirmation message"
+
+    @pytest.mark.anyio
+    async def test_unknown_command_via_adapter(self, tmp_path):
+        """/bogus should be intercepted, return True, and report unknown."""
+        sent = []
+
+        async def send(text):
+            sent.append(text)
+
+        cfg = _make_temp_config(tmp_path)
+        with patch("channels.slash_commands.get_config", return_value=cfg):
+            from channels.slash_commands import handle_slash
+            result = await handle_slash("/boguscmd", "discord", "user42",
+                                        self._make_sm(), self._make_loop(), send)
+
+        assert result is True
+        assert any("Unknown" in s or "unknown" in s for s in sent)
+
+    @pytest.mark.anyio
+    async def test_non_slash_message_falls_through(self, tmp_path):
+        """A plain message is NOT a slash command and handle_slash is not called
+        at the adapter boundary — this test verifies handle_slash itself
+        still returns False for agent-handled slash commands (boundary contract)."""
+        # /think is an agent-handled command — handle_slash returns False
+        sent = []
+
+        async def send(text):
+            sent.append(text)
+
+        cfg = _make_temp_config(tmp_path)
+        with patch("channels.slash_commands.get_config", return_value=cfg):
+            from channels.slash_commands import handle_slash
+            result = await handle_slash("/think deeply", "discord", "user42",
+                                        self._make_sm(), self._make_loop(), send)
+
+        # Agent-handled commands return False so the adapter routes them onward
+        assert result is False
+
+
+# ---------------------------------------------------------------------------
+# Integration tests — WebSocket auth (connect with good/bad token)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.skipif(not _HAS_REAL_FASTAPI, reason="fastapi not installed")
+class TestWebSocketAuth:
+    """Integration tests for WebSocket auth handshake.
+
+    Uses FastAPI's TestClient which supports ws:// connections via the
+    starlette websocket test helpers.
+    """
+
+    def _make_app_client(self, tmp_path, monkeypatch, good_token="good-token"):
+        import importlib
+        import web.app as app_mod
+        importlib.reload(app_mod)
+
+        TestClient = _RealTestClient
+
+        # Patch _verify_token: accept only good_token
+        monkeypatch.setattr(
+            app_mod,
+            "_verify_token",
+            lambda token: token == good_token,
+        )
+
+        agent_loop = MagicMock()
+
+        async def fake_run(channel, peer, message):
+            yield "pong"
+
+        agent_loop.run = fake_run
+
+        monkeypatch.setattr(app_mod, "_agent_loop", agent_loop)
+        monkeypatch.setattr(app_mod, "_session_manager", MagicMock())
+
+        return TestClient(app_mod.app)
+
+    def test_ws_valid_token_connects(self, tmp_path, monkeypatch):
+        """WebSocket with a valid auth token should connect successfully."""
+        client = self._make_app_client(tmp_path, monkeypatch)
+        with client.websocket_connect("/ws/chat") as ws:
+            ws.send_json({"token": "good-token"})
+            data = ws.receive_json()
+            assert data.get("status") == "connected"
+
+    def test_ws_bad_token_rejected(self, tmp_path, monkeypatch):
+        """WebSocket with a wrong token should be rejected (error or close)."""
+        client = self._make_app_client(tmp_path, monkeypatch)
+        rejected = False
+        try:
+            with client.websocket_connect("/ws/chat") as ws:
+                ws.send_json({"token": "wrong-token"})
+                data = ws.receive_json()
+                # Server sends {"error": "Unauthorized"} then closes
+                if "error" in data:
+                    rejected = True
+                else:
+                    # Connection may have closed without explicit error message
+                    rejected = False
+        except Exception:
+            # WebSocketDisconnect or similar — also counts as rejected
+            rejected = True
+        assert rejected, "Expected bad token to be rejected"
+
+    def test_ws_missing_token_rejected(self, tmp_path, monkeypatch):
+        """WebSocket with no token field should be rejected."""
+        client = self._make_app_client(tmp_path, monkeypatch)
+        rejected = False
+        try:
+            with client.websocket_connect("/ws/chat") as ws:
+                ws.send_json({})  # no token key
+                data = ws.receive_json()
+                if "error" in data:
+                    rejected = True
+        except Exception:
+            rejected = True
+        assert rejected, "Expected missing token to be rejected"

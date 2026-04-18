@@ -9,13 +9,13 @@ import asyncio
 import logging
 from typing import Optional
 
-from telegram import Update, Bot
+from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 from telegram.constants import ChatAction
 
-from channels.base import ChannelAdapter, InboundMessage
+from channels.base import ChannelAdapter
 from channels.base import MessageHandler as HelixMessageHandler
-from channels.slash_commands import handle_slash, HARNESS_COMMANDS, AGENT_COMMANDS
+from channels.slash_commands import handle_slash
 from security.auth import AuthManager
 from security.input_validator import sanitize_for_context
 from security.secrets import get_secret
@@ -170,7 +170,6 @@ class TelegramAdapter(ChannelAdapter):
         sender_name: str,
         attachment_info: Optional[dict] = None,
     ) -> None:
-        chat_id = update.effective_chat.id
         channel = "telegram"
         peer = str(user_id)
 

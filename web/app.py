@@ -24,10 +24,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from core.config import get_config, save_config
 from security.secrets import get_secret, set_secret
 from channels.slash_commands import handle_slash
+from main import VERSION
 
 logger = logging.getLogger("helix.web")
 
-app = FastAPI(title="Helix Admin", version="1.0.0")
+app = FastAPI(title="Helix Admin", version=VERSION)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:18791", "http://127.0.0.1:18791"],
@@ -460,7 +461,7 @@ async def take_snapshot(channel: str, peer: str):
         model=compaction_model,
         system="You are an expert at writing detailed memory entries for AI agent logs.",
         user_message=snapshot_prompt,
-        is_new_session=True,
+        is_new_session=False,
     )
 
     if not summary:

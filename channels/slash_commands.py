@@ -158,7 +158,6 @@ async def handle_slash(
         last = datetime.fromtimestamp(session["last_active"], tz).strftime(f"%Y-%m-%d %H:%M {cfg.timezone}")
         tokens_used = session.get("token_count", 0)
         ctx_window = session.get("context_window", 0)
-        max_output = session.get("max_output_tokens", 0)
 
         if ctx_window:
             pct = (tokens_used / ctx_window * 100)

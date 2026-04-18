@@ -2,6 +2,16 @@
 
 All notable changes to Helix Agent will be documented here.
 
+## [Unreleased] - 2026-04-17 (Round 2)
+
+### Fixed (Round 2)
+- Version drift: FastAPI metadata now uses VERSION constant (was still hardcoded 1.0.0)
+- Snapshot route: corrected is_new_session=False (was incorrectly True)
+- Removed dead/unfinished logic in _sanitize_filename()
+
+### Added
+- Integration tests: snapshot route via TestClient, slash command adapter boundary, WebSocket auth success/failure
+
 ## [Unreleased] - 2026-04-17
 
 ### Fixed

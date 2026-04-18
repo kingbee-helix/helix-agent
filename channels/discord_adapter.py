@@ -11,10 +11,10 @@ import logging
 from typing import Optional
 
 import discord
-from discord import Message, DMChannel, TextChannel
+from discord import Message, DMChannel
 
-from channels.base import ChannelAdapter, InboundMessage, MessageHandler
-from channels.slash_commands import handle_slash, HARNESS_COMMANDS, AGENT_COMMANDS
+from channels.base import ChannelAdapter, MessageHandler
+from channels.slash_commands import handle_slash
 from security.auth import AuthManager
 from security.input_validator import sanitize_for_context
 from security.secrets import get_secret
