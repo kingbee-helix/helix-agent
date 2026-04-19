@@ -8,21 +8,23 @@ Helix acts as a frontend for [Claude Code](https://docs.anthropic.com/claude-cod
 
 ## Screenshots
 
-| Home | Chat |
-|------|------|
-| ![Home](screenshots/home.jpg) | ![Chat](screenshots/chat.jpg) |
+Helix ships with four built-in themes — each available in dark and light mode.
 
-| Memory | Crons |
-|--------|-------|
-| ![Memory](screenshots/memory.jpg) | ![Crons](screenshots/crons.jpg) |
+| Classic Dark | Classic Light |
+|---|---|
+| ![Classic Dark](screenshots/classic-dark.jpg) | ![Classic Light](screenshots/classic-light.jpg) |
 
-| Config | Logs |
-|--------|------|
-| ![Config](screenshots/config.jpg) | ![Logs](screenshots/logs.jpg) |
+| Forest Dark | Forest Light |
+|---|---|
+| ![Forest Dark](screenshots/forest-dark.jpg) | ![Forest Light](screenshots/forest-light.jpg) |
 
-| Model Switch |
-|-------------|
-| ![Model Switch](screenshots/model-switch.jpg) |
+| Ocean Dark | Ocean Light |
+|---|---|
+| ![Ocean Dark](screenshots/ocean-dark.jpg) | ![Ocean Light](screenshots/ocean-light.jpg) |
+
+| Volcano Dark | Volcano Light |
+|---|---|
+| ![Volcano Dark](screenshots/volcano-dark.jpg) | ![Volcano Light](screenshots/volcano-light.jpg) |
 
 ## What You Get
 
