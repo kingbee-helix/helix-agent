@@ -177,7 +177,7 @@ class DiscordAdapter(ChannelAdapter):
                 for part in parts:
                     await self._send_to_channel(message.channel, part)
             else:
-                await message.reply(parts[0], mention_author=False, suppress_embeds=True)
+                await message.channel.send(parts[0], suppress_embeds=True)
                 for part in parts[1:]:
                     await message.channel.send(part, suppress_embeds=True)
             if self.audit_logger:
@@ -228,7 +228,7 @@ class DiscordAdapter(ChannelAdapter):
         status_msg = None
         status_msg_disposed = False  # Track whether status_msg was edited/deleted
         try:
-            status_msg = await message.reply("thinking...", mention_author=False)
+            status_msg = await message.channel.send("thinking...")
         except Exception:
             try:
                 status_msg = await message.channel.send("thinking...")
@@ -283,12 +283,12 @@ class DiscordAdapter(ChannelAdapter):
                     if is_dm:
                         await self._send_to_channel(message.channel, parts[0])
                     else:
-                        await message.reply(parts[0], mention_author=False, suppress_embeds=True)
+                        await message.channel.send(parts[0], suppress_embeds=True)
             else:
                 if is_dm:
                     await self._send_to_channel(message.channel, parts[0])
                 else:
-                    await message.reply(parts[0], mention_author=False, suppress_embeds=True)
+                    await message.channel.send(parts[0], suppress_embeds=True)
             for part in parts[1:]:
                 await message.channel.send(part, suppress_embeds=True)
             if self.audit_logger:
